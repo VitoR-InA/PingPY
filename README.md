@@ -8,9 +8,19 @@
 **PingPY** - A game written in python using the pygame library for creating 2D games, pygame integration that adds a user interface - pygame-gui and the pymunk library for simulating physics.
 
 ## Build it yourself
-```
+```sh
 git clone https://github.com/VitoR-InA/PingPY
 cd PingPY
+```
+You can build it using pyinstaller
+```sh
 pyinstaller --windowed --clean Ping.py
 ```
+**!The game uses the _internal folder to store logs and music, the absence of logs and music folders will cause the game to crash!** Before playing, copy the music and logs folders from _internal to dest\\_internal after building via pyinstaller
+
+or you can use [build.bat](build.bat)
+```sh
+build
+```
+
 > See [pygame gui freezing issue](https://pygame-gui.readthedocs.io/en/latest/freezing.html) if you have any problems
