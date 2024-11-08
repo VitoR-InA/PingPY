@@ -11,6 +11,6 @@
 ```
 git clone https://github.com/VitoR-InA/PingPY
 cd PingPY
-pyinstaller --hide-console Ping.py
+pyinstaller --windowed Ping.py
 ```
 > See [pygame gui freezing issue](https://pygame-gui.readthedocs.io/en/latest/freezing.html) if you have any problems
