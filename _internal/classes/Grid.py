@@ -22,7 +22,7 @@ class Grid:
                 body = pm.Body(body_type=pm.Body.STATIC)
                 body.position = (new_x, new_y)
                 shape = pm.Poly.create_box(body, (self.body_width, self.body_height))
-                shape.color = (randint(100, 255), randint(100, 255), randint(100, 255), 255)
+                shape.color = (randint(50, 255), randint(50, 255), randint(50, 255), 255)
                 shape.elasticity = 1
                 shape.collision_type = 2
                 self.bodies.append(body)

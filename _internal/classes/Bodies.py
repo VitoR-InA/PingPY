@@ -17,7 +17,7 @@ class Ball:
         self.body.position = position
         self.shape = pm.Circle(self.body, radius)
         self.shape.collision_type = 1
-        self.shape.elasticity = 1.02
+        self.shape.elasticity = 1.01
         self.shape.friction = 0
         self.shape.color = color
         space.add(self.body, self.shape)
