@@ -1,11 +1,7 @@
-import logging
-
 import pygame as pg
 import pymunk as pm
 
 from typing import Tuple
-
-logger = logging.getLogger(__name__)
 
 class Ball:
     def __init__(self, mass: float, position: Tuple[float, float], radius: float, color: Tuple[int, int, int, int], space: pm.Space):

@@ -1,12 +1,8 @@
-import logging
-
 import pygame as pg
 import pymunk as pm
 
 from random import randint
 from typing import Tuple
-
-logger = logging.getLogger(__name__)
 
 class Grid:
     def __init__(self, space: pm.Space, rect: pg.Rect, count: Tuple[int, int]):
@@ -32,7 +28,6 @@ class Grid:
                 self.bodies.append(body)
                 self.shapes.append(shape)
                 space.add(body, shape)
-        logger.info("New grid creation complete")
 
     def draw(self, surface: pg.Surface):
         for num, body in enumerate(self.bodies):
@@ -46,4 +41,4 @@ class Grid:
             self.bodies.pop(self.shapes.index(shape))
             self.shapes.pop(self.shapes.index(shape))
         except ValueError as exception:
-            logger.warning(f"{shape} remove error:\n    {exception}")
+            pass
