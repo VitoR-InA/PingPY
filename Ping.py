@@ -3,8 +3,6 @@ from _internal.classes.Grid import Grid
 
 from datetime import datetime
 
-import logging
-
 from math import sin, cos, radians
 
 import pygame as pg
@@ -17,14 +15,7 @@ from pymunk import pygame_util as pgu
 
 from random import randint
 
-from time import perf_counter, sleep
-
 from typing import Tuple
-
-
-logging.basicConfig(filename=f"_internal\\logs\\{datetime.now().strftime('%Y-%m-%d %H-%M')}.log",
-                    format="%(asctime)s: (%(levelname)s) %(message)s", level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def get_sign(num: int | float):
@@ -41,11 +32,11 @@ class Game:
                  flags: int = 0,
                  caption: str = "Window",
                  fps: int = 60):
-        """Initialization"""
+        "Init"
         #Pygame init
         pg.init()
         pg.mixer.init()
-        logger.info("Pygame init complete")
+        self.TIMEREVENT = pg.USEREVENT + 3
 
         #Defining window vars
         self.size = size
@@ -58,10 +49,9 @@ class Game:
             self.size = (info.current_w, info.current_h)
 
 
-        """Pygame surfaces"""
+        "Pygame surfaces"
         #Window
         self.screen = pg.display.set_mode(self.size, flags)
-        logger.info("Pygame window creation complete")
 
         #UIManager surface
         self.manager = UIManager(self.size)
@@ -70,7 +60,7 @@ class Game:
         pg.display.set_caption(caption)
         
         
-        """Sounds"""
+        "Sounds"
         #Bodies sound channels
         self.ball_channel = pg.mixer.Channel(1)
         self.ball_channel.set_volume(0.5)
@@ -82,7 +72,7 @@ class Game:
         self.sounds = {}
 
 
-        """Pymunk init"""
+        "Pymunk init"
         #Pymunk space setup
         pgu.positive_y_is_up = False
         self.space = pm.Space()
@@ -94,10 +84,9 @@ class Game:
         #Defining debug draw options
         self.options = pgu.DrawOptions(self.screen)
         self.debug = False
-        logger.info("Pymunk init complete")
 
 
-        """Pymunk bodies"""
+        "Pymunk bodies"
         #Defining ball
         self.ball_radius = 10
         self.ball = Ball(1, (0, 0), self.ball_radius, (255, 0, 0, 255), self.space)
@@ -124,7 +113,7 @@ class Game:
         Wall((self.size[0] + wall_size - 1, 0), (self.size[0] + wall_size - 1, self.size[1]), wall_size, self.space)
 
 
-        """GUI"""
+        "GUI"
         self.elements = []
         
         #Defining start button
@@ -140,7 +129,7 @@ class Game:
         self.elements.append(self.autopilot_btn)
 
 
-        """Fonts"""
+        "Fonts"
         #Defining debug font
         self.debug_font = pg.Font(None, 30)
 
@@ -149,14 +138,15 @@ class Game:
 
 
     def draw_arrow(self, center: Tuple[float, float], angle: int):
+        "Draws arrow at given coordinates, defines ball direction"
         self.end_x = center[0] + 50 * cos(radians(angle))
         self.end_y = center[1] - 50 * sin(radians(angle))
-        
+
         left_end_x = self.end_x + 25 * cos(radians(angle + 140))
         left_end_y = self.end_y - 25 * sin(radians(angle + 140))
         right_end_x = self.end_x + 25 * cos(radians(angle - 140))
         right_end_y = self.end_y - 25 * sin(radians(angle - 140))
-        
+
         pg.draw.line(self.screen, "#FFFFFF", (self.end_x, self.end_y), (left_end_x, left_end_y), 3)
         pg.draw.line(self.screen, "#FFFFFF", (self.end_x, self.end_y), (right_end_x, right_end_y), 3)
 
@@ -181,33 +171,32 @@ class Game:
         self.grid = Grid(self.space, pg.Rect(0, 0, self.size[0], self.size[1] / 2.5), grid_bodies_count)
         self.set_elements_vidible(False)
         self.state = 1
-        self.game_start = perf_counter()
-        logger.info("Started new level")
         pg.mixer.music.pause()
 
- 
+
     def end_level(self):
-        """Stops current level"""
+        "Stops current level"
         for shape in self.grid.get_shapes():
             self.space.remove(shape)
             self.grid.remove_shape(shape)
         self.set_elements_vidible(True)
         self.state = 0
-        logger.info(f"Current level finished in {round(perf_counter() - self.game_start)}")
         pg.mixer.music.unpause()
-        
-        
+
+
     def set_elements_vidible(self, value):
+        "Sets visible of all game elements"
         for element in self.elements:
             element.visible = value
 
 
     def toggle_autopilot(self):
+        "Toggles autopilot var"
         self.autopilot = not self.autopilot
 
 
     def on_collision(self, arbiter: pm.arbiter.Arbiter, space: pm.Space, data):
-        """Removes grid body on collision"""
+        "Removes grid body on collision"
         space.remove(arbiter.shapes[1])
         self.grid.remove_shape(arbiter.shapes[1])
         self.ball_channel.play(self.sounds[f"Jump{randint(1, 2)}"])
@@ -215,9 +204,8 @@ class Game:
 
 
     def run(self):
-        """Runs main cycle"""
+        "Runs main cycle"
         running = True
-        logger.info("Game process started")
         pg.mixer.music.play(-1)
         while running:
             delta = self.clock.tick(self.FPS) / 1000.0
@@ -258,11 +246,15 @@ class Game:
                         self.ball_speed = speed
                         self.ball.body.velocity = speed
                         self.state = 2
-                        logger.info("Player threw the ball")
 
                     #End current level
                     if self.state and event.key == pg.K_ESCAPE:
                         self.end_level()
+                        
+                
+                #Catching timer end user event
+                if event.type == self.TIMEREVENT:
+                    self.end_level()
 
 
                 #Catching pygame GUI on button press event
@@ -278,7 +270,7 @@ class Game:
                     #Exit button
                     if event.ui_element == self.exit_btn:
                         self.player_channel.play(self.sounds["GameExit"])
-                        sleep(0.22)
+                        pg.time.delay(220)
                         running = False
 
                     if event.ui_element == self.autopilot_btn:
@@ -286,7 +278,7 @@ class Game:
                         self.autopilot_btn.set_text(f"Autopilot: {'on' if self.autopilot else 'off'}")
 
 
-            """Key bindings"""
+            "Key bindings"
             if self.state:
 
                 #Left
@@ -309,12 +301,12 @@ class Game:
                         self.player.body.velocity = (0, 0)
 
 
-            """Autopilot"""
+            "Autopilot"
             if self.autopilot:
                 self.player.body.position = (self.ball.body.position[0], self.player.body.position[1])
 
 
-            """Limitations"""
+            "Limitations"
             #Limiting the player's movement
             player_x_limit = max(min(self.player.body.position[0], self.size[0] - self.player.rect.size[0] / 2), self.player.rect.size[0] / 2)
             self.player.body.position = (player_x_limit, self.player.body.position[1])
@@ -323,53 +315,50 @@ class Game:
             if self.state == 2:
                 self.ball.body.velocity = (float(f"{get_sign(self.ball.body.velocity[0])}{abs(self.ball_speed[0])}"),
                                            float(f"{get_sign(self.ball.body.velocity[1])}{abs(self.ball_speed[1])}"))
-                
-                
-                """Game states"""
+
+
+                "Game states"
                 #Game over when the ball crosses the length of the screen + the radius of the ball
                 if self.ball.body.position[1] > self.size[1] + self.ball_radius:
-                    self.game_over = perf_counter()
+                    pg.time.set_timer(self.TIMEREVENT, 2500)
                     self.player_channel.play(self.sounds["PlayerDie"])
                     self.state = 3
-                
+
                 #Game win when ball breaks all grid bodies
                 if not len(self.grid.get_shapes()):
-                    self.game_over = perf_counter()
+                    pg.time.set_timer(self.TIMEREVENT, 2500)
                     self.player_channel.play(self.sounds["PlayerWin"])
                     self.state = 4
 
 
-            """Update"""
+            "Update"
             #UIManager update
             self.manager.update(delta)
-            
+
             if self.state == 2:
                 #Pymunk space update
                 self.space.step(delta)
-                
-            if (self.state == 3 or self.state == 4) and perf_counter() - self.game_over >= 1.5:
-                self.end_level()
 
             #Pygame screen update
             self.screen.fill("#070707")
 
 
-            """Draw"""
+            "Draw"
             #Drawing manager GUI
             self.manager.draw_ui(self.screen)
-            
+
             if self.state == 1:
                 #Drawing arrow
                 self.draw_arrow(self.ball.body.position, self.angle)
-                
+
                 #Setting start ball velocity | direction
                 self.ball_start_velocity = (self.end_x - self.ball.body.position[0],
                                             self.end_y - self.ball.body.position[1])
-                
+
                 #Setting player speed
                 self.player_speed = max(abs(self.ball_start_velocity[0] * 15), abs(self.ball_start_velocity[1] * 15))
-                
-                
+
+
             if self.state:
                 #Drawing player
                 self.player.draw(self.screen)
@@ -396,7 +385,7 @@ class Game:
                 self.screen.blit(text, (self.size[0] / 2 - text.width / 2, 100))
 
 
-            """Debug"""
+            "Debug"
             if self.debug:
                 if self.state:
                     #Drawing pymunk debug draw
@@ -431,7 +420,5 @@ class Game:
 
 #Launching the game
 if __name__ == "__main__":
-    start = perf_counter()
     game = Game(size=(0, 0), flags=pg.NOFRAME, caption="PingPY")
     game.run()
-    logger.info(f"Game process finished in {round(perf_counter() - start, 1)}")
