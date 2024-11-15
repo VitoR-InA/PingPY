@@ -36,7 +36,9 @@ class Game:
         #Pygame init
         pg.init()
         pg.mixer.init()
-        self.TIMEREVENT = pg.USEREVENT + 3
+        
+        #Defining user events
+        self.TIMEREVENT = pg.USEREVENT + 3 #MIN 3, pggui using pygame.USEREVENT
 
         #Defining window vars
         self.size = size
