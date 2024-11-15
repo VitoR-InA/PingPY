@@ -5,7 +5,7 @@ from random import randint
 from typing import Tuple
 
 class Grid:
-    def __init__(self, space: pm.Space, rect: pg.Rect, count: Tuple[int, int]):
+    def __init__(self, rect: pg.Rect, count: Tuple[int, int], space: pm.Space):
         self.body_width = rect.width / count[0]
         self.body_height = rect.height / count[1]
         grid_center = rect.center
