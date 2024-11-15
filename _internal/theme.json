@@ -1,0 +1,26 @@
+{
+    "defaults":
+    {
+        "colours":
+        {
+            "normal_text":"#FFFFFF",
+            "hovered_text":"#FFFFFF"
+        }
+    },
+
+    "button":
+    {
+        "font":
+        {
+            "size":"20"
+        }
+    },
+
+    "label":
+    {
+        "font":
+        {
+            "size":"20"
+        }
+    }
+}
