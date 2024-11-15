@@ -8,7 +8,7 @@ import pygame_gui as pggui
 import pymunk as pm
 
 from pygame_gui import UIManager
-from pygame_gui.elements import UIButton, UI2DSlider
+from pygame_gui.elements import UIButton, UIHorizontalSlider, UILabel
 from pymunk import pygame_util as pgu
 
 from random import randint
@@ -16,11 +16,12 @@ from random import randint
 from typing import Tuple
 
 
-WHITE = (255, 255, 255, 255)
-BLACK = (0, 0, 0, 255)
-RED = (255, 0, 0, 255)
-GREEN = (0, 255, 0, 255)
-BLUE = (0, 0, 255, 255)
+def get_divisors(num, start, stop):
+    result = []
+    for i in range(start, stop):
+        if (num * 10) % i == 0:
+            result.append(i)
+    return result
 
 
 class Game:
@@ -28,7 +29,8 @@ class Game:
                  size: Tuple[int, int],
                  flags: int = 0,
                  caption: str = "Window",
-                 fps: int = 60):
+                 fps: int = 60,
+                 theme_path: str = None):
         "Init"
         #Pygame init
         pg.init()
@@ -53,7 +55,7 @@ class Game:
         self.screen = pg.display.set_mode(self.size, flags)
 
         #UIManager surface
-        self.manager = UIManager(self.size)
+        self.manager = UIManager(self.size, theme_path)
 
         #Window title
         pg.display.set_caption(caption)
@@ -72,7 +74,8 @@ class Game:
         "Pymunk init"
         #Pymunk space setup
         pgu.positive_y_is_up = False
-        self.space = pm.Space()
+        self.space = pm.Space(True)
+        self.space.threads = 4
 
         #Defining on collision handler
         collision_handler = self.space.add_collision_handler(1, 2)
@@ -102,6 +105,14 @@ class Game:
         "GUI"
         self.elements = []
         
+        #Defining volume slider
+        self.volume_sldr = UIHorizontalSlider(pg.Rect(10, self.size[1] - 90, 280, 80), 100, (0, 100), self.manager)
+        self.elements.append(self.volume_sldr)
+        
+        #Defining slider label
+        self.volume_lbl = UILabel(pg.Rect(10, self.size[1] - 90, 280, 80), "Volume", self.manager)
+        self.elements.append(self.volume_lbl)
+
         #Defining start button
         self.start_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 180), (280, 80)), "Start", self.manager)
         self.elements.append(self.start_btn)
@@ -218,10 +229,10 @@ class Game:
     def run(self):
         "Runs main cycle"
         running = True
-        
+
         self.state = 0
         self.states = ["MENU", "PREPARATION", "PLAYING", "DIED", "WINNED"]
-        
+
         pg.mixer.music.play(-1)
         while running:
             delta = self.clock.tick(self.FPS) / 1000.0
@@ -265,8 +276,8 @@ class Game:
                     #End current level
                     if self.state and event.key == pg.K_ESCAPE:
                         self.end_level()
-                        
-                
+
+
                 #Catching timer end user event
                 if event.type == self.TIMEREVENT:
                     self.end_level()
@@ -277,9 +288,9 @@ class Game:
 
                     #Start button
                     if event.ui_element == self.start_btn:
-                        self.new_player((250, 15), 750, WHITE, self.space)
+                        self.new_player((250, 15), 750, (255, ) * 4, self.space)
                         self.new_ball(10, (self.player.body.position[0],
-                                           self.player.body.position[1] - 100), RED, self.space)
+                                           self.player.body.position[1] - 100), (255, 0, 0, 255), self.space)
                         self.new_grid((self.size[0], self.size[1] / 2), (8, 4), self.space)
                         self.set_elements_vidible(False)
                         self.state = 1
@@ -291,6 +302,11 @@ class Game:
                         self.master.play(self.sounds["GameExit"])
                         pg.time.delay(220)
                         running = False
+                        
+                if event.type == pggui.UI_HORIZONTAL_SLIDER_MOVED:
+                    if event.ui_element == self.volume_sldr:
+                        pg.mixer.music.set_volume(event.value / 100)
+                        self.master.set_volume(event.value / 100)
 
 
             "Key bindings"
@@ -298,7 +314,7 @@ class Game:
 
                 #Left
                 if keys[pg.K_a] or keys[pg.K_LEFT]:
-                    if self.state == 1 and self.angle < 165:
+                    if self.state == 1 and self.angle < 135:
                         self.angle += 100 * delta
                     if self.state == 2 and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
                         self.player.body.velocity = (-self.player_speed, 0)
@@ -306,7 +322,7 @@ class Game:
 
                 #Right
                 elif keys[pg.K_d] or keys[pg.K_RIGHT]:
-                    if self.state == 1 and self.angle > 15:
+                    if self.state == 1 and self.angle > 45:
                         self.angle -= 100 * delta
                     if self.state == 2 and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
                         self.player.body.velocity = (self.player_speed, 0)
@@ -355,7 +371,8 @@ class Game:
 
             "Draw"
             #Drawing manager GUI
-            self.manager.draw_ui(self.screen)
+            if not self.state:
+                self.manager.draw_ui(self.screen)
 
             if self.state == 1:
                 #Drawing arrow
@@ -369,26 +386,26 @@ class Game:
             if self.state:
                 #Drawing player
                 self.player.draw(self.screen)
-                
+
                 #Drawing ball
                 self.ball.draw(self.screen)
-                
+
                 #Drawing grid
                 self.grid.draw(self.screen)
-                
+
                 if self.state == 3:
                     #Drawing game over text
-                    text = self.header_font.render("Game over!", True, "#B0B0B0")
+                    text = self.header_font.render("Game over!", True, "#FFFFFF")
                     self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
-                
+
                 if self.state == 4:
                     #Drawing game win text
-                    text = self.header_font.render("Game win!", True, "#B0B0B0")
+                    text = self.header_font.render("Game win!", True, "#FFFFFF")
                     self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
-                
+
             else:
                 #Drawing game title
-                self.screen.blit(self.header_font.render("PingPY", True, "#B0B0B0"), (10, -30))
+                self.screen.blit(self.header_font.render("PingPY", True, "#FFFFFF"), (10, -30))
 
 
             "Debug"
@@ -411,5 +428,5 @@ class Game:
 
 #Launching the game
 if __name__ == "__main__":
-    game = Game(size=(0, 0), flags=pg.NOFRAME, caption="PingPY")
+    game = Game(size=(0, 0), flags=pg.NOFRAME, caption="PingPY", theme_path="_internal\\theme.json")
     game.run()
