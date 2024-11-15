@@ -1,7 +1,5 @@
-from _internal.classes.Bodies import Ball, Player, Wall
+from _internal.classes.Bodies import Ball, Box, Player
 from _internal.classes.Grid import Grid
-
-from datetime import datetime
 
 from math import sin, cos, radians
 
@@ -10,7 +8,7 @@ import pygame_gui as pggui
 import pymunk as pm
 
 from pygame_gui import UIManager
-from pygame_gui.elements import UIButton
+from pygame_gui.elements import UIButton, UI2DSlider
 from pymunk import pygame_util as pgu
 
 from random import randint
@@ -18,12 +16,11 @@ from random import randint
 from typing import Tuple
 
 
-def get_sign(num: int | float):
-    """
-    Returns:
-        str: sign of given number
-    """
-    return "-" if num < 0 else ""
+WHITE = (255, 255, 255, 255)
+BLACK = (0, 0, 0, 255)
+RED = (255, 0, 0, 255)
+GREEN = (0, 255, 0, 255)
+BLUE = (0, 0, 255, 255)
 
 
 class Game:
@@ -64,11 +61,9 @@ class Game:
         
         "Sounds"
         #Bodies sound channels
-        self.ball_channel = pg.mixer.Channel(1)
-        self.ball_channel.set_volume(0.5)
-        self.player_channel = pg.mixer.Channel(2)
-        self.player_channel.set_volume(0.5)
-        pg.mixer.music.load("_internal\\music\\Music.wav")
+        self.master = pg.mixer.Channel(0)
+        self.master.set_volume(1)
+        pg.mixer.music.load("_internal\\sounds\\Music.wav")
         
         #Sounds var
         self.sounds = {}
@@ -89,54 +84,39 @@ class Game:
 
 
         "Pymunk bodies"
-        #Defining ball
-        self.ball_radius = 10
-        self.ball = Ball(1, (0, 0), self.ball_radius, (255, 0, 0, 255), self.space)
-        self.ball_start_velocity = None
-        self.ball_speed = (0, 0)
-        self.angle = 90
-        self.sounds["Jump1"] = pg.mixer.Sound("_internal\\music\\Jump.wav")
-        self.sounds["Jump2"] = pg.mixer.Sound("_internal\\music\\Jump2.wav")
+        #Defining ball vars
+        self.sounds["Jump1"] = pg.mixer.Sound("_internal\\sounds\\Jump.wav")
+        self.sounds["Jump2"] = pg.mixer.Sound("_internal\\sounds\\Jump2.wav")
 
-        #Defining player
-        self.player = Player(pg.Rect(self.size[0] / 2, self.size[1] - 50, 150, 15), (255, 255, 255, 255), self.space)
+        #Defining player vars
         self.autopilot = False
-        self.player_speed = 0
-        self.state = 0
-        self.sounds["PlayerWin"] = pg.mixer.Sound("_internal\\music\\playerWin.wav")
-        self.sounds["PlayerDie"] = pg.mixer.Sound("_internal\\music\\PlayerDie.wav")
-        self.sounds["GameStart"] = pg.mixer.Sound("_internal\\music\\GameStart.wav")
-        self.sounds["GameExit"] = pg.mixer.Sound("_internal\\music\\GameExit.wav")
+        self.sounds["PlayerWin"] = pg.mixer.Sound("_internal\\sounds\\playerWin.wav")
+        self.sounds["PlayerDie"] = pg.mixer.Sound("_internal\\sounds\\PlayerDie.wav")
+        self.sounds["GameStart"] = pg.mixer.Sound("_internal\\sounds\\GameStart.wav")
+        self.sounds["GameExit"] = pg.mixer.Sound("_internal\\sounds\\GameExit.wav")
 
         #Defining walls
-        wall_size = 15
-        Wall((0, -wall_size), (self.size[0], -wall_size), wall_size, self.space)
-        Wall((-wall_size, 0), (-wall_size, self.size[1]), wall_size, self.space)
-        Wall((self.size[0] + wall_size - 1, 0), (self.size[0] + wall_size - 1, self.size[1]), wall_size, self.space)
+        Box(pg.Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
 
 
         "GUI"
         self.elements = []
         
         #Defining start button
-        self.start_btn = UIButton(pg.Rect((self.size[0] / 2 - 140, self.size[1] / 2 - 40), (280, 80)), "Start", self.manager)
+        self.start_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 180), (280, 80)), "Start", self.manager)
         self.elements.append(self.start_btn)
         
         #Defining exit button
-        self.exit_btn = UIButton(pg.Rect((self.size[0] / 2 - 140, self.size[1] / 2 - 40 + 100), (280, 80)), "Exit", self.manager)
+        self.exit_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 90), (280, 80)), "Exit", self.manager)
         self.elements.append(self.exit_btn)
-        
-        #Defining autopilot toggle button
-        self.autopilot_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 90), (280, 80)), f"Autopilot: {'on' if self.autopilot else 'off'}", self.manager)
-        self.elements.append(self.autopilot_btn)
 
 
         "Fonts"
         #Defining debug font
-        self.debug_font = pg.Font(None, 30)
+        self.debug_font = pg.Font("_internal\\fonts\\Default.otf", 20)
 
         #Defining header font
-        self.header_font = pg.Font(None, 170)
+        self.header_font = pg.Font("_internal\\fonts\\Default.otf", 170)
 
 
     def draw_arrow(self, center: Tuple[float, float], angle: int):
@@ -153,27 +133,56 @@ class Game:
         pg.draw.line(self.screen, "#FFFFFF", (self.end_x, self.end_y), (right_end_x, right_end_y), 3)
 
 
-    def new_level(self,
-                 start_ball_position: Tuple[float, float],
-                 ball_speed: Tuple[float, float],
-                 player_speed: float,
-                 grid_bodies_count: Tuple[int, int]):
+    def new_ball(self,
+                 radius: int,
+                 position: Tuple[float, float],
+                 color: Tuple[int, int, int, int],
+                 space: pm.Space):
         """
-        Creates a grid of bodies, defines all necessary variables
+        Creates Ball class copy
 
         Args:
-            start_ball_position (Tuple[float, float]): defines ball position
-            ball_speed (Tuple[float, float]): defines ball constant speed
-            player_speed (float): defines player constant speed
-            grid_bodies_count (Tuple[int, int]): defines number of grid bodies
+            radius (int): ball radius
+            position (Tuple[float, float]): ball center position
+            color (Tuple[int, int, int, int]): ball shape color
+            space (pm.Space): pymunk space
         """
-        self.ball.body.position = start_ball_position
-        self.ball_speed = ball_speed
-        self.player_speed = player_speed
-        self.grid = Grid(self.space, pg.Rect(0, 0, self.size[0], self.size[1] / 2.5), grid_bodies_count)
-        self.set_elements_vidible(False)
-        self.state = 1
-        pg.mixer.music.pause()
+        self.ball = Ball(1, position, radius, color, space)
+        self.ball_start_velocity = (0, 0)
+        self.angle = 90
+        
+        
+    def new_grid(self,
+                 size: Tuple[int, int],
+                 count: Tuple[int, int],
+                 space: pm.Space):
+        """
+        Creates Grid class copy
+
+        Args:
+            size (Tuple[int, int]): grid size
+            count (Tuple[int, int]): bodies count in grid
+            space (pm.Space): pymunk space
+        """
+        self.grid = Grid(pg.Rect((0, 0), size), count, space)
+
+
+    def new_player(self,
+                   size: Tuple[int, int],
+                   speed: int,
+                   color: Tuple[int, int, int, int],
+                   space: pm.Space):
+        """
+        Creates Player class copy
+
+        Args:
+            size (Tuple[int, int]): player size
+            speed (int): player speed
+            color (Tuple[int, int, int, int]): player shape color
+            space (pm.Space): pymunk space
+        """
+        self.player = Player(pg.Rect((self.size[0] / 2, self.size[1] - 50), size), color, space)
+        self.player_speed = speed
 
 
     def end_level(self):
@@ -181,6 +190,7 @@ class Game:
         for shape in self.grid.get_shapes():
             self.space.remove(shape)
             self.grid.remove_shape(shape)
+        self.space.remove(self.player.shape, self.ball.shape)
         self.set_elements_vidible(True)
         self.state = 0
         pg.mixer.music.unpause()
@@ -201,13 +211,17 @@ class Game:
         "Removes grid body on collision"
         space.remove(arbiter.shapes[1])
         self.grid.remove_shape(arbiter.shapes[1])
-        self.ball_channel.play(self.sounds[f"Jump{randint(1, 2)}"])
+        self.master.play(self.sounds[f"Jump{randint(1, 2)}"])
         return True
 
 
     def run(self):
         "Runs main cycle"
         running = True
+        
+        self.state = 0
+        self.states = ["MENU", "PREPARATION", "PLAYING", "DIED", "WINNED"]
+        
         pg.mixer.music.play(-1)
         while running:
             delta = self.clock.tick(self.FPS) / 1000.0
@@ -221,7 +235,7 @@ class Game:
             keys = pg.key.get_pressed()
 
 
-            """Pygame events"""
+            "Pygame events"
             #Getting all pygame events
             for event in pg.event.get():
 
@@ -241,12 +255,11 @@ class Game:
                     #Toggle debug
                     if event.key == pg.K_F3:
                         self.debug = not self.debug
-                        
+
                     #Throw ball
                     if self.state == 1 and event.key == pg.K_SPACE:
-                        speed = (self.ball_start_velocity[0] * 15, self.ball_start_velocity[1] * 15)
-                        self.ball_speed = speed
-                        self.ball.body.velocity = speed
+                        self.ball_speed = [vel * 15 for vel in self.ball_start_velocity]
+                        self.ball.body.velocity = self.ball_speed
                         self.state = 2
 
                     #End current level
@@ -264,38 +277,41 @@ class Game:
 
                     #Start button
                     if event.ui_element == self.start_btn:
-                        self.player.body.position = (self.size[0] / 2, self.size[1] - 50)
-                        self.angle = 90
-                        self.new_level((self.player.body.position[0], self.player.body.position[1] - 100), (0, 0), 0, (16, 8))
-                        self.player_channel.play(self.sounds["GameStart"])
+                        self.new_player((250, 15), 750, WHITE, self.space)
+                        self.new_ball(10, (self.player.body.position[0],
+                                           self.player.body.position[1] - 100), RED, self.space)
+                        self.new_grid((self.size[0], self.size[1] / 2), (8, 4), self.space)
+                        self.set_elements_vidible(False)
+                        self.state = 1
+                        pg.mixer.music.pause()
+                        self.master.play(self.sounds["GameStart"])
 
                     #Exit button
                     if event.ui_element == self.exit_btn:
-                        self.player_channel.play(self.sounds["GameExit"])
+                        self.master.play(self.sounds["GameExit"])
                         pg.time.delay(220)
                         running = False
-
-                    if event.ui_element == self.autopilot_btn:
-                        self.toggle_autopilot()
-                        self.autopilot_btn.set_text(f"Autopilot: {'on' if self.autopilot else 'off'}")
 
 
             "Key bindings"
             if self.state:
 
                 #Left
-                if (keys[pg.K_a] or keys[pg.K_LEFT]):
+                if keys[pg.K_a] or keys[pg.K_LEFT]:
                     if self.state == 1 and self.angle < 165:
-                        self.angle += 3
-                    if self.state == 2 and not self.autopilot:
+                        self.angle += 100 * delta
+                    if self.state == 2 and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
                         self.player.body.velocity = (-self.player_speed, 0)
+                    else: self.player.body.velocity = (0, 0)
 
                 #Right
-                elif (keys[pg.K_d] or keys[pg.K_RIGHT]):
+                elif keys[pg.K_d] or keys[pg.K_RIGHT]:
                     if self.state == 1 and self.angle > 15:
-                        self.angle -= 3
-                    if self.state == 2 and not self.autopilot:
+                        self.angle -= 100 * delta
+                    if self.state == 2 and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
                         self.player.body.velocity = (self.player_speed, 0)
+                    else:
+                        self.player.body.velocity = (0, 0)
 
                 #No pressed keys
                 else:
@@ -309,27 +325,19 @@ class Game:
 
 
             "Limitations"
-            #Limiting the player's movement
-            player_x_limit = max(min(self.player.body.position[0], self.size[0] - self.player.rect.size[0] / 2), self.player.rect.size[0] / 2)
-            self.player.body.position = (player_x_limit, self.player.body.position[1])
-
             #Locking the speed of the ball
             if self.state == 2:
-                self.ball.body.velocity = (float(f"{get_sign(self.ball.body.velocity[0])}{abs(self.ball_speed[0])}"),
-                                           float(f"{get_sign(self.ball.body.velocity[1])}{abs(self.ball_speed[1])}"))
-
-
                 "Game states"
                 #Game over when the ball crosses the length of the screen + the radius of the ball
-                if self.ball.body.position[1] > self.size[1] + self.ball_radius:
-                    pg.time.set_timer(self.TIMEREVENT, 2500)
-                    self.player_channel.play(self.sounds["PlayerDie"])
+                if self.ball.body.position[1] > self.size[1]:
+                    pg.time.set_timer(self.TIMEREVENT, 2500, 1)
+                    self.master.play(self.sounds["PlayerDie"])
                     self.state = 3
 
                 #Game win when ball breaks all grid bodies
                 if not len(self.grid.get_shapes()):
                     pg.time.set_timer(self.TIMEREVENT, 2500)
-                    self.player_channel.play(self.sounds["PlayerWin"])
+                    self.master.play(self.sounds["PlayerWin"])
                     self.state = 4
 
 
@@ -357,9 +365,6 @@ class Game:
                 self.ball_start_velocity = (self.end_x - self.ball.body.position[0],
                                             self.end_y - self.ball.body.position[1])
 
-                #Setting player speed
-                self.player_speed = max(abs(self.ball_start_velocity[0] * 15), abs(self.ball_start_velocity[1] * 15))
-
 
             if self.state:
                 #Drawing player
@@ -383,8 +388,7 @@ class Game:
                 
             else:
                 #Drawing game title
-                text = self.header_font.render("PingPY", True, "#B0B0B0")
-                self.screen.blit(text, (self.size[0] / 2 - text.width / 2, 100))
+                self.screen.blit(self.header_font.render("PingPY", True, "#B0B0B0"), (10, -30))
 
 
             "Debug"
@@ -397,22 +401,7 @@ class Game:
                 self.screen.blit(self.debug_font.render(f"{str(fps)} fps", True, "#FFFFFF", "#000000"), (0, 0))
 
                 #Drawing the value of the state var
-                self.screen.blit(self.debug_font.render(f"state: {self.state}", True, "#FFFFFF", "#000000"), (0, 25))
-
-                #Drawing the value of the self.player_speed var
-                self.screen.blit(self.debug_font.render(f"player speed: {self.player_speed}", True, "#FFFFFF", "#000000"), (0, 50))
-                
-                #Drawing the value of the self.player.body.position[0] var
-                self.screen.blit(self.debug_font.render(f"player position: {self.player.body.position[0]}", True, "#FFFFFF", "#000000"), (0, 75))
-
-                #Drawing the value of the self.ball_speed var
-                self.screen.blit(self.debug_font.render(f"ball speed: {self.ball_speed}", True, "#FFFFFF", "#000000"), (0, 100))
-                
-                #Drawing the value of the self.ball.body.velocity var
-                self.screen.blit(self.debug_font.render(f"ball velocity: {self.ball.body.velocity}", True, "#FFFFFF", "#000000"), (0, 125))
-
-                #Drawing the value of the self.ball_speed var
-                self.screen.blit(self.debug_font.render(f"start ball velocity: {self.ball_start_velocity}", True, "#FFFFFF", "#000000"), (0, 150))
+                self.screen.blit(self.debug_font.render(f"state: {self.states[self.state]}", True, "#FFFFFF", "#000000"), (0, 24))
 
 
             #Displaying on window
