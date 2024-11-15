@@ -1,5 +1,5 @@
 # PingPY
-![showcase](https://github.com/user-attachments/assets/716d07a7-c7a3-4454-95d7-488263be6232)
+![release 1.0](https://github.com/user-attachments/assets/716d07a7-c7a3-4454-95d7-488263be6232)
 
 ![GitHub License](https://img.shields.io/github/license/VitoR-InA/PingPY)
 ![Python](https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)
