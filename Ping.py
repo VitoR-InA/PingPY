@@ -3,12 +3,14 @@ from _internal.classes.Grid import Grid
 
 from math import sin, cos, radians
 
+import pickle as pkl
+
 import pygame as pg
 import pygame_gui as pggui
 import pymunk as pm
 
 from pygame_gui import UIManager
-from pygame_gui.elements import UIButton, UIHorizontalSlider, UILabel
+from pygame_gui.elements import UIButton, UIHorizontalSlider, UIAutoResizingContainer, UILabel
 from pymunk import pygame_util as pgu
 
 from random import randint
@@ -24,7 +26,17 @@ def get_divisors(num, start, stop):
     return result
 
 
-class Game:
+MENU_STATE = 0
+SHOP_STATE = 1
+PREPARATION_STATE = 2
+PLAYING_STATE = 3
+DIED_STATE = 4
+WINNED_STATE = 5
+
+STATES = {val: var for var, val in globals().items() if var.endswith("_STATE")}
+
+
+class PingPY:
     def __init__(self,
                  size: Tuple[int, int],
                  flags: int = 0,
@@ -43,18 +55,19 @@ class Game:
         self.size = size
         self.clock = pg.time.Clock()
         self.FPS = fps
-        
+
         #Setting (0, 0) size to screen size for UIManager correct work
         if self.size == (0, 0):
             info = pg.display.Info()
             self.size = (info.current_w, info.current_h)
+        self.size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
 
 
         "Pygame surfaces"
         #Window
         self.screen = pg.display.set_mode(self.size, flags)
 
-        #UIManager surface
+        #UIManager surfaces
         self.manager = UIManager(self.size, theme_path)
 
         #Window title
@@ -66,7 +79,7 @@ class Game:
         self.master = pg.mixer.Channel(0)
         self.master.set_volume(1)
         pg.mixer.music.load("_internal\\sounds\\Music.wav")
-        
+
         #Sounds var
         self.sounds = {}
 
@@ -103,31 +116,49 @@ class Game:
 
 
         "GUI"
-        self.elements = []
+        #Defining menu container
+        self.menu_container = UIAutoResizingContainer(pg.Rect((0, 0), self.size), manager=self.manager)
         
+        #Defining shop container
+        self.shop_container = UIAutoResizingContainer(pg.Rect((0, 0), self.size), manager=self.manager)
+        
+        
+        button_size = (280 / self.size_factor, 80 / self.size_factor)
+        
+        print(button_size)
+        
+
         #Defining volume slider
-        self.volume_sldr = UIHorizontalSlider(pg.Rect(10, self.size[1] - 90, 280, 80), 100, (0, 100), self.manager)
-        self.elements.append(self.volume_sldr)
-        
+        self.volume_sldr = UIHorizontalSlider(pg.Rect((10, self.size[1] - button_size[1] - 10), button_size),
+                                              100, (0, 100), self.manager, self.menu_container)
+
         #Defining slider label
-        self.volume_lbl = UILabel(pg.Rect(10, self.size[1] - 90, 280, 80), "Volume", self.manager)
-        self.elements.append(self.volume_lbl)
+        self.volume_lbl = UILabel(pg.Rect((10, self.size[1] - button_size[1] - 10), button_size),
+                                  "Volume", self.manager, self.menu_container)
 
         #Defining start button
-        self.start_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 180), (280, 80)), "Start", self.manager)
-        self.elements.append(self.start_btn)
-        
+        self.start_btn = UIButton(pg.Rect((self.size[0] - button_size[0] - 10, self.size[1] - (button_size[1] + 10) * 3), button_size),
+                                  "Start", self.manager, self.menu_container)
+
+        #Defining shop button
+        self.shop_btn = UIButton(pg.Rect((self.size[0] - button_size[0] - 10, self.size[1] - (button_size[1] + 10) * 2), button_size),
+                                 "Shop", self.manager, self.menu_container)
+
+        #Defining back button
+        self.back_btn = UIButton(pg.Rect((10, self.size[1] - 90), (80, 80)),
+                                 "Back", self.manager, self.shop_container)
+
         #Defining exit button
-        self.exit_btn = UIButton(pg.Rect((self.size[0] - 290, self.size[1] - 90), (280, 80)), "Exit", self.manager)
-        self.elements.append(self.exit_btn)
+        self.exit_btn = UIButton(pg.Rect((self.size[0] - button_size[0] - 10, self.size[1] - (button_size[1] + 10)), button_size),
+                                 "Exit", self.manager, self.menu_container)
 
 
         "Fonts"
         #Defining debug font
-        self.debug_font = pg.Font("_internal\\fonts\\Default.otf", 20)
+        self.debug_font = pg.Font("_internal\\fonts\\Default.otf", 20 // int(self.size_factor))
 
         #Defining header font
-        self.header_font = pg.Font("_internal\\fonts\\Default.otf", 170)
+        self.header_font = pg.Font("_internal\\fonts\\Default.otf", 170 // int(self.size_factor))
 
 
     def draw_arrow(self, center: Tuple[float, float], angle: int):
@@ -161,8 +192,8 @@ class Game:
         self.ball = Ball(1, position, radius, color, space)
         self.ball_start_velocity = (0, 0)
         self.angle = 90
-        
-        
+
+
     def new_grid(self,
                  size: Tuple[int, int],
                  count: Tuple[int, int],
@@ -181,7 +212,7 @@ class Game:
     def new_player(self,
                    size: Tuple[int, int],
                    speed: int,
-                   color: Tuple[int, int, int, int],
+                   health: int,
                    space: pm.Space):
         """
         Creates Player class copy
@@ -192,8 +223,24 @@ class Game:
             color (Tuple[int, int, int, int]): player shape color
             space (pm.Space): pymunk space
         """
-        self.player = Player(pg.Rect((self.size[0] / 2, self.size[1] - 50), size), color, space)
+        self.player = Player(pg.Rect((self.size[0] / 2, self.size[1] - 50), size), health, space)
         self.player_speed = speed
+
+
+    def player_take_damage(self, damage: int):
+        """
+        Deals damage to player
+
+        Args:
+            damage (int): Defines how much damage the player takes
+        """
+        self.master.play(self.sounds["GameExit"])
+        self.player.body.position = (self.size[0] / 2, self.size[1] - 50)
+        self.ball.body.position = (self.player.body.position[0],
+                                   self.player.body.position[1] - 100)
+        self.player.health -= damage
+        self.angle = 90
+        self.state = PREPARATION_STATE
 
 
     def end_level(self):
@@ -202,20 +249,9 @@ class Game:
             self.space.remove(shape)
             self.grid.remove_shape(shape)
         self.space.remove(self.player.shape, self.ball.shape)
-        self.set_elements_vidible(True)
-        self.state = 0
+        self.menu_container.show()
+        self.state = MENU_STATE
         pg.mixer.music.unpause()
-
-
-    def set_elements_vidible(self, value):
-        "Sets visible of all game elements"
-        for element in self.elements:
-            element.visible = value
-
-
-    def toggle_autopilot(self):
-        "Toggles autopilot var"
-        self.autopilot = not self.autopilot
 
 
     def on_collision(self, arbiter: pm.arbiter.Arbiter, space: pm.Space, data):
@@ -230,8 +266,7 @@ class Game:
         "Runs main cycle"
         running = True
 
-        self.state = 0
-        self.states = ["MENU", "PREPARATION", "PLAYING", "DIED", "WINNED"]
+        self.state = MENU_STATE
 
         pg.mixer.music.play(-1)
         while running:
@@ -239,10 +274,11 @@ class Game:
             fps = round(self.clock.get_fps())
 
 
-            if self.state:
+            if self.state >= PREPARATION_STATE:
                 pg.mouse.set_visible(False)
             else:
                 pg.mouse.set_visible(True)
+
             keys = pg.key.get_pressed()
 
 
@@ -268,14 +304,20 @@ class Game:
                         self.debug = not self.debug
 
                     #Throw ball
-                    if self.state == 1 and event.key == pg.K_SPACE:
+                    if self.state == PREPARATION_STATE and event.key == pg.K_SPACE:
                         self.ball_speed = [vel * 15 for vel in self.ball_start_velocity]
                         self.ball.body.velocity = self.ball_speed
-                        self.state = 2
+                        self.state = PLAYING_STATE
+
+                    if self.state == PLAYING_STATE and self.player.health > 1 and event.key == pg.K_q:
+                        self.player_take_damage(1)
 
                     #End current level
-                    if self.state and event.key == pg.K_ESCAPE:
-                        self.end_level()
+                    if event.key == pg.K_ESCAPE:
+                        if self.state == PREPARATION_STATE or self.state == PLAYING_STATE:
+                            self.end_level()
+                        elif self.state == SHOP_STATE:
+                            self.state = MENU_STATE
 
 
                 #Catching timer end user event
@@ -288,14 +330,21 @@ class Game:
 
                     #Start button
                     if event.ui_element == self.start_btn:
-                        self.new_player((250, 15), 750, (255, ) * 4, self.space)
+                        self.state = PREPARATION_STATE
+                        self.new_player((250, 20), 750, 5, self.space)
                         self.new_ball(10, (self.player.body.position[0],
                                            self.player.body.position[1] - 100), (255, 0, 0, 255), self.space)
                         self.new_grid((self.size[0], self.size[1] / 2), (8, 4), self.space)
-                        self.set_elements_vidible(False)
-                        self.state = 1
                         pg.mixer.music.pause()
                         self.master.play(self.sounds["GameStart"])
+                        
+                    #Shop button
+                    if event.ui_element == self.shop_btn:
+                        self.state = SHOP_STATE
+
+                    #Back button
+                    if event.ui_element == self.back_btn:
+                        self.state = MENU_STATE
 
                     #Exit button
                     if event.ui_element == self.exit_btn:
@@ -310,29 +359,28 @@ class Game:
 
 
             "Key bindings"
-            if self.state:
+            if self.state >= PREPARATION_STATE:
 
                 #Left
                 if keys[pg.K_a] or keys[pg.K_LEFT]:
-                    if self.state == 1 and self.angle < 135:
+                    if self.state == PREPARATION_STATE and self.angle < 135:
                         self.angle += 100 * delta
-                    if self.state == 2 and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
+                    if self.state == PLAYING_STATE and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
                         self.player.body.velocity = (-self.player_speed, 0)
                     else: self.player.body.velocity = (0, 0)
 
                 #Right
                 elif keys[pg.K_d] or keys[pg.K_RIGHT]:
-                    if self.state == 1 and self.angle > 45:
+                    if self.state == PREPARATION_STATE and self.angle > 45:
                         self.angle -= 100 * delta
-                    if self.state == 2 and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
+                    if self.state == PLAYING_STATE and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
                         self.player.body.velocity = (self.player_speed, 0)
                     else:
                         self.player.body.velocity = (0, 0)
 
                 #No pressed keys
-                else:
-                    if self.state == 2:
-                        self.player.body.velocity = (0, 0)
+                elif self.state == PLAYING_STATE:
+                    self.player.body.velocity = (0, 0)
 
 
             "Autopilot"
@@ -340,28 +388,31 @@ class Game:
                 self.player.body.position = (self.ball.body.position[0], self.player.body.position[1])
 
 
-            "Limitations"
-            #Locking the speed of the ball
-            if self.state == 2:
+            "Player events"
+            if self.state == PREPARATION_STATE or self.state == PLAYING_STATE:
                 "Game states"
-                #Game over when the ball crosses the length of the screen + the radius of the ball
+                #Decrease player's health by 1
                 if self.ball.body.position[1] > self.size[1]:
+                    self.player_take_damage(1)
+
+                #Game over when the player's health == 0
+                if not self.player.health:
                     pg.time.set_timer(self.TIMEREVENT, 2500, 1)
                     self.master.play(self.sounds["PlayerDie"])
-                    self.state = 3
+                    self.state = DIED_STATE
 
                 #Game win when ball breaks all grid bodies
                 if not len(self.grid.get_shapes()):
-                    pg.time.set_timer(self.TIMEREVENT, 2500)
+                    pg.time.set_timer(self.TIMEREVENT, 2500, 1)
                     self.master.play(self.sounds["PlayerWin"])
-                    self.state = 4
+                    self.state = WINNED_STATE
 
 
             "Update"
             #UIManager update
             self.manager.update(delta)
 
-            if self.state == 2:
+            if self.state == PLAYING_STATE:
                 #Pymunk space update
                 self.space.step(delta)
 
@@ -370,11 +421,7 @@ class Game:
 
 
             "Draw"
-            #Drawing manager GUI
-            if not self.state:
-                self.manager.draw_ui(self.screen)
-
-            if self.state == 1:
+            if self.state == PREPARATION_STATE:
                 #Drawing arrow
                 self.draw_arrow(self.ball.body.position, self.angle)
 
@@ -382,8 +429,10 @@ class Game:
                 self.ball_start_velocity = (self.end_x - self.ball.body.position[0],
                                             self.end_y - self.ball.body.position[1])
 
+            if self.state == PREPARATION_STATE or self.state == PLAYING_STATE:
+                self.menu_container.hide()
+                self.shop_container.hide()
 
-            if self.state:
                 #Drawing player
                 self.player.draw(self.screen)
 
@@ -393,19 +442,30 @@ class Game:
                 #Drawing grid
                 self.grid.draw(self.screen)
 
-                if self.state == 3:
-                    #Drawing game over text
-                    text = self.header_font.render("Game over!", True, "#FFFFFF")
-                    self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
+            elif self.state == DIED_STATE:
+                #Drawing game over text
+                text = self.header_font.render("Game over!", True, "#FFFFFF")
+                self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
 
-                if self.state == 4:
-                    #Drawing game win text
-                    text = self.header_font.render("Game win!", True, "#FFFFFF")
-                    self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
+            elif self.state == WINNED_STATE:
+                #Drawing game win text
+                text = self.header_font.render("Game win!", True, "#FFFFFF")
+                self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
 
-            else:
+            elif self.state == MENU_STATE:
                 #Drawing game title
-                self.screen.blit(self.header_font.render("PingPY", True, "#FFFFFF"), (10, -30))
+                self.screen.blit(self.header_font.render("PingPY", True, "#FFFFFF"), (10, 10))
+                self.menu_container.show()
+                self.shop_container.hide()
+
+            elif self.state == SHOP_STATE:
+                #Drawing game title
+                self.screen.blit(self.header_font.render("Shop", True, "#FFFFFF"), (10, 10))
+                self.menu_container.hide()
+                self.shop_container.show()
+
+            #Drawing manager GUI
+            self.manager.draw_ui(self.screen)
 
 
             "Debug"
@@ -415,10 +475,10 @@ class Game:
                     self.space.debug_draw(self.options)
 
                 #Drawing current fps
-                self.screen.blit(self.debug_font.render(f"{str(fps)} fps", True, "#FFFFFF", "#000000"), (0, 0))
+                self.screen.blit(self.debug_font.render(f"{fps} fps", True, "#FFFFFF", "#000000"), (0, 0))
 
                 #Drawing the value of the state var
-                self.screen.blit(self.debug_font.render(f"state: {self.states[self.state]}", True, "#FFFFFF", "#000000"), (0, 24))
+                self.screen.blit(self.debug_font.render(f"state: {STATES[self.state]} ({self.state})", True, "#FFFFFF", "#000000"), (0, 24))
 
 
             #Displaying on window
@@ -428,5 +488,5 @@ class Game:
 
 #Launching the game
 if __name__ == "__main__":
-    game = Game(size=(0, 0), flags=pg.NOFRAME, caption="PingPY", theme_path="_internal\\theme.json")
-    game.run()
+    ping = PingPY(size=(1080, 720), flags=pg.NOFRAME, caption="PingPY", theme_path="_internal\\theme.json")
+    ping.run()
