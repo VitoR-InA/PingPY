@@ -8,11 +8,11 @@
         }
     },
 
-    "button":
+    "#question_button":
     {
-        "font":
+        "colours":
         {
-            "size":"20"
+            "hovered_bg":"#4C5052"
         }
     },
 
