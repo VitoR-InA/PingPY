@@ -5,22 +5,28 @@ from typing import Tuple
 
 
 class Ball:
-    def __init__(self, mass: float,
-                 position: Tuple[float, float],
+    def __init__(self,
                  radius: float,
                  color: Tuple[int, int, int, int],
                  space: pm.Space):
-        self.mass = mass
+        self.mass = 1
         self.radius = radius
         self.moment = pm.moment_for_circle(self.mass, self.radius, 0)
+        
         self.body = pm.Body(self.mass, self.moment)
-        self.body.position = position
+        self._screen_size = pg.display.get_surface().get_size()
+        self.body.position = (self._screen_size[0] / 2, self._screen_size[1] - 100)
+        
         self.shape = pm.Circle(self.body, radius)
         self.shape.collision_type = 1
-        self.shape.elasticity = 1.01
+        self.shape.elasticity = 1.001
         self.shape.friction = 0
         self.shape.color = color
+        
         space.add(self.body, self.shape)
+        
+    def reset_position(self):
+        self.body.position = (self._screen_size[0] / 2, self._screen_size[1] - 100)
         
     def draw(self, surface):
         pg.draw.circle(surface, self.shape.color, self.body.position, self.radius)
@@ -46,11 +52,12 @@ class Box:
 
 class Player:
     def __init__(self,
-                 rect: pg.Rect,
+                 size: Tuple[int, int],
                  health: int,
                  space: pm.Space):
         #Player rect
-        self.rect = rect
+        self._screen_size = pg.display.get_surface().get_size()
+        self.rect = pg.Rect((self._screen_size[0] / 2, self._screen_size[1] - 50), size)
         
         #Player health
         self.health = health
@@ -63,7 +70,7 @@ class Player:
         
         #Player body
         self.body = pm.Body(body_type=pm.Body.KINEMATIC)
-        self.body.position = rect.topleft
+        self.body.position = self.rect.topleft
         
         #Player shape
         self.shape = pm.Poly.create_box(self.body, self.rect.size)
@@ -72,6 +79,9 @@ class Player:
         
         #Add player to space
         space.add(self.body, self.shape)
+        
+    def reset_position(self):
+        self.body.position = (self._screen_size[0] / 2, self._screen_size[1] - 50)
 
     def draw(self, surface):
         #Change color
