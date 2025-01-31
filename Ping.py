@@ -78,7 +78,7 @@ class PingPY(Window):
         #Bodies sound channels
         self.master = pg.mixer.Channel(0)
         self.master.set_volume(1)
-        pg.mixer.music.load("_internal\\sounds\\Music.wav")
+        pg.mixer.music.load("_internal\\Sounds\\Music.wav")
 
         #Sounds var
         self.sounds = {}
@@ -102,8 +102,8 @@ class PingPY(Window):
         #Defining ball vars
         self.ball_default_pos = (self.size[0] / 2, self.size[1] - 100)
 
-        self.sounds["Jump1"] = pg.mixer.Sound("_internal\\sounds\\Jump.wav")
-        self.sounds["Jump2"] = pg.mixer.Sound("_internal\\sounds\\Jump2.wav")
+        self.sounds["Jump1"] = pg.mixer.Sound("_internal\\Sounds\\Jump.wav")
+        self.sounds["Jump2"] = pg.mixer.Sound("_internal\\Sounds\\Jump2.wav")
 
         #Defining player vars
         self.score = 0
@@ -113,10 +113,10 @@ class PingPY(Window):
         self.player_default_pos = (self.size[0] / 2, self.size[1] - 50)
 
         self.autopilot = False
-        self.sounds["PlayerWin"] = pg.mixer.Sound("_internal\\sounds\\playerWin.wav")
-        self.sounds["PlayerDie"] = pg.mixer.Sound("_internal\\sounds\\PlayerDie.wav")
-        self.sounds["GameStart"] = pg.mixer.Sound("_internal\\sounds\\GameStart.wav")
-        self.sounds["GameExit"] = pg.mixer.Sound("_internal\\sounds\\GameExit.wav")
+        self.sounds["PlayerWin"] = pg.mixer.Sound("_internal\\Sounds\\playerWin.wav")
+        self.sounds["PlayerDie"] = pg.mixer.Sound("_internal\\Sounds\\PlayerDie.wav")
+        self.sounds["GameStart"] = pg.mixer.Sound("_internal\\Sounds\\GameStart.wav")
+        self.sounds["GameExit"] = pg.mixer.Sound("_internal\\Sounds\\GameExit.wav")
 
         #Defining walls
         HollowBox(pg.Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
@@ -209,10 +209,10 @@ class PingPY(Window):
 
         "====----      Fonts       ----===="
         #Defining debug font
-        self.debug_font = pg.Font("_internal\\fonts\\Default.otf", 20 // int(self.size_factor))
+        self.debug_font = pg.Font("_internal\\Fonts\\Default.otf", 20 // int(self.size_factor))
 
         #Defining header font
-        self.header_font = pg.Font("_internal\\fonts\\Default.otf", 170 // int(self.size_factor))
+        self.header_font = pg.Font("_internal\\Fonts\\Default.otf", 170 // int(self.size_factor))
         
         
         "====----    Data load     ----===="
