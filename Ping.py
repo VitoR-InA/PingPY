@@ -4,8 +4,6 @@ from _internal.GameClasses.Bodies.Player import Player
 
 from _internal.GameClasses.Grid.Grid import Grid
 
-from math import sin, cos, radians
-
 from os.path import exists
 
 import pickle as pkl
@@ -22,8 +20,6 @@ import pymunk as pm
 from pymunk import pygame_util as pgu
 
 from random import randint
-
-from typing import Tuple
 
 
 def get_multiples(size, start, stop):
