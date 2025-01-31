@@ -1,5 +1,8 @@
-from _internal.classes.Bodies import Ball, Box, Player
-from _internal.classes.Grid import Grid, draw_test_grid
+from _internal.GameClasses.Bodies.Ball import Ball
+from _internal.GameClasses.Bodies.HollowBox import HollowBox
+from _internal.GameClasses.Bodies.Player import Player
+
+from _internal.GameClasses.Grid.Grid import Grid
 
 from math import sin, cos, radians
 
@@ -8,12 +11,14 @@ from os.path import exists
 import pickle as pkl
 
 import pygame as pg
-import pygame_gui as pggui
-import pymunk as pm
+from pygame._sdl2 import Window
 
+import pygame_gui as pggui
 from pygame_gui import UIManager
 from pygame_gui.core import ObjectID
 from pygame_gui.elements import UIButton, UIHorizontalSlider, UIAutoResizingContainer, UILabel, UIPanel
+
+import pymunk as pm
 from pymunk import pygame_util as pgu
 
 from random import randint
@@ -42,47 +47,35 @@ WINNED_STATE = 6
 STATES = {val: var for var, val in globals().items() if var.endswith("_STATE")}
 
 
-class PingPY:
-    def __init__(self,
-                 size: Tuple[int, int] = (0, 0),
-                 flags: int = 0,
-                 caption: str = "Window",
-                 fps: int = 60,
-                 theme_path: str = None):
+class PingPY(Window):
+    def __init__(self):
         "====----       Init       ----===="
         #Pygame init
         pg.init()
         pg.mixer.init()
         
+        super().__init__("PingPY", fullscreen_desktop = True)
+
         #Defining user events
         self.TIMEREVENT = pg.USEREVENT + 3 #MIN 3, pggui using pygame.USEREVENT
 
         #Defining window vars
-        self.size = size
         self.clock = pg.time.Clock()
-        self.FPS = fps
+        self.FPSLOCK = 60
 
-        #Setting (0, 0) size to screen size for UIManager correct work
-        if self.size == (0, 0):
-            info = pg.display.Info()
-            self.size = (info.current_w, info.current_h)
-        
         self.size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
-        
+
         divisors = get_multiples(self.size, 8, 20)
 
         self.sizes = (min(divisors), divisors[len(divisors) // 2], max(divisors))
             
 
         "====---- Pygame surfaces  ----===="
-        #Window
-        self.screen = pg.display.set_mode(self.size, flags)
+        #Main window surface
+        self.screen = self.get_surface()
 
-        #UIManager surfaces
-        self.manager = UIManager(self.size, theme_path)
-
-        #Window title
-        pg.display.set_caption(caption)
+        #UIManager surface
+        self.manager = UIManager(self.size, "_internal\\theme.json")
 
 
         "====----      Sounds      ----===="
@@ -111,16 +104,18 @@ class PingPY:
 
         "====----  Pymunk bodies   ----===="
         #Defining ball vars
-        self.angle = 90
+        self.ball_default_pos = (self.size[0] / 2, self.size[1] - 100)
+
         self.sounds["Jump1"] = pg.mixer.Sound("_internal\\sounds\\Jump.wav")
         self.sounds["Jump2"] = pg.mixer.Sound("_internal\\sounds\\Jump2.wav")
 
         #Defining player vars
         self.score = 0
-        
+
         self.player_speed = 500
         self.player_health = 3
-        
+        self.player_default_pos = (self.size[0] / 2, self.size[1] - 50)
+
         self.autopilot = False
         self.sounds["PlayerWin"] = pg.mixer.Sound("_internal\\sounds\\playerWin.wav")
         self.sounds["PlayerDie"] = pg.mixer.Sound("_internal\\sounds\\PlayerDie.wav")
@@ -128,7 +123,7 @@ class PingPY:
         self.sounds["GameExit"] = pg.mixer.Sound("_internal\\sounds\\GameExit.wav")
 
         #Defining walls
-        Box(pg.Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
+        HollowBox(pg.Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
 
 
         "====----       GUI        ----===="
@@ -229,32 +224,12 @@ class PingPY:
             self.load_data()
 
 
-    def draw_arrow(self, center: Tuple[float, float], angle: int):
-        "Draws arrow at given coordinates, defines ball direction"
-        self.end_x = center[0] + 50 * cos(radians(angle))
-        self.end_y = center[1] - 50 * sin(radians(angle))
-
-        left_end_x = self.end_x + 25 * cos(radians(angle + 140))
-        left_end_y = self.end_y - 25 * sin(radians(angle + 140))
-        right_end_x = self.end_x + 25 * cos(radians(angle - 140))
-        right_end_y = self.end_y - 25 * sin(radians(angle - 140))
-
-        pg.draw.line(self.screen, "#FFFFFF", (self.end_x, self.end_y), (left_end_x, left_end_y), 3)
-        pg.draw.line(self.screen, "#FFFFFF", (self.end_x, self.end_y), (right_end_x, right_end_y), 3)
-
-
-    def player_take_damage(self, damage: int = 1):
-        """
-        Deals damage to player
-
-        Args:
-            damage (int): Defines how much damage the player takes
-        """
+    def reset_player(self, damage: int = 1):
         self.master.play(self.sounds["GameExit"])
-        self.player.reset_position()
-        self.ball.reset_position()
-        self.player.health -= damage
-        self.angle = 90
+        self.player.take_damage(damage)
+        self.player.set_position(self.player_default_pos)
+        self.ball.set_position(self.ball_default_pos)
+        self.ball.set_angle(90)
         self.state = THROWING_STATE
         
         
@@ -300,7 +275,7 @@ class PingPY:
             data = {"game":{"volume":pg.mixer.music.get_volume(), "size":self.grid_size},
                     "player":{"speed":self.player_speed, "health":self.player_health, "score":self.score}}
             pkl.dump(data, file)
-            
+
     def load_data(self):
         with open("_internal\\Ping.data", "rb") as file:
             data = pkl.load(file)
@@ -328,14 +303,13 @@ class PingPY:
 
         pg.mixer.music.play(-1)
         while running:
-            delta = self.clock.tick(self.FPS) / 1000.0
+            time_delta = self.clock.tick(self.FPSLOCK) / 1000.0
             fps = round(self.clock.get_fps())
 
 
             if self.state >= THROWING_STATE:
                 pg.mouse.set_visible(False)
-            else:
-                pg.mouse.set_visible(True)
+            else: pg.mouse.set_visible(True)
 
             keys = pg.key.get_pressed()
 
@@ -369,7 +343,7 @@ class PingPY:
                         self.state = PLAYING_STATE
 
                     if self.state == PLAYING_STATE and self.player.health > 1 and event.key == pg.K_q:
-                        self.player_take_damage()
+                        self.reset_player()
 
                     #End current level
                     if event.key == pg.K_ESCAPE:
@@ -396,10 +370,9 @@ class PingPY:
                     #Start button
                     if event.ui_element == self.start_btn:
                         self.state = THROWING_STATE
-                        self.player = Player((250, 20), self.player_health, self.space)
-                        self.ball = Ball(10, (255, 0, 0, 255), self.space)
-                        self.angle = 90
-                        self.grid = Grid((self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
+                        self.player = Player((self.player_default_pos, (250, 20)), self.player_health, self.player_speed, self.space)
+                        self.ball = Ball("FF0000", self.ball_default_pos, 10, self.space)
+                        self.grid = Grid(((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
                         pg.mixer.music.pause()
                         self.master.play(self.sounds["GameStart"])
 
@@ -441,7 +414,7 @@ class PingPY:
                     if event.ui_element == self.volume_sldr:
                         pg.mixer.music.set_volume(event.value / 100)
                         self.master.set_volume(event.value / 100)
-                    
+
                     if event.ui_element == self.size_sldr:
                         self.grid_size = event.value
 
@@ -451,8 +424,8 @@ class PingPY:
 
                 #Left
                 if keys[pg.K_a] or keys[pg.K_LEFT]:
-                    if self.state == THROWING_STATE and self.angle < 135:
-                        self.angle += 100 * delta
+                    if self.state == THROWING_STATE and self.ball.angle < 135:
+                        self.ball.angle += 100 * time_delta
                         
                     if self.state == PLAYING_STATE and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
                         self.player.body.velocity = (-self.player_speed, 0)
@@ -461,8 +434,8 @@ class PingPY:
 
                 #Right
                 elif keys[pg.K_d] or keys[pg.K_RIGHT]:
-                    if self.state == THROWING_STATE and self.angle > 45:
-                        self.angle -= 100 * delta
+                    if self.state == THROWING_STATE and self.ball.angle > 45:
+                        self.ball.angle -= 100 * time_delta
                         
                     if self.state == PLAYING_STATE and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
                         self.player.body.velocity = (self.player_speed, 0)
@@ -495,7 +468,7 @@ class PingPY:
             if THROWING_STATE <= self.state <= PLAYING_STATE:
                 #Decrease player's health by 1
                 if self.ball.body.position[1] > self.size[1]:
-                    self.player_take_damage()
+                    self.reset_player()
 
                 #Game over when the player's health == 0
                 if not self.player.health:
@@ -512,11 +485,11 @@ class PingPY:
 
             "====---- Update ----===="
             #UIManager update
-            self.manager.update(delta)
+            self.manager.update(time_delta)
 
             if self.state == PLAYING_STATE:
                 #Pymunk space update
-                self.space.step(delta)
+                self.space.step(time_delta)
 
             #Pygame screen update
             self.screen.fill("#070707")
@@ -524,12 +497,8 @@ class PingPY:
 
             "====---- Draw arrow ----===="
             if self.state == THROWING_STATE:
-                #Drawing arrow
-                self.draw_arrow(self.ball.body.position, self.angle)
-
                 #Setting start ball velocity | direction
-                self.ball_start_velocity = (self.end_x - self.ball.body.position[0],
-                                            self.end_y - self.ball.body.position[1])
+                self.ball_start_velocity = self.ball.draw_arrow(self.screen)
 
 
             "====---- Other GUI draw ----===="
@@ -546,18 +515,18 @@ class PingPY:
                 self.menu_container.hide()
                 self.preparation_container.hide()
                 self.shop_container.show()
-                
+
                 self.player_speed_lbl.set_text(f"Speed: {self.player_speed}")
-                
+
                 self.player_health_lbl.set_text(f"Health: {self.player_health}")
-                
-                
+
+
             elif self.state == PREPARATION_STATE:
                 self.menu_container.hide()
                 self.preparation_container.show()
                 self.shop_container.hide()
 
-                draw_test_grid((self.sizes[self.grid_size], self.sizes[self.grid_size]), self.screen)
+                Grid.draw_test_grid(((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.screen)
             
             elif THROWING_STATE <= self.state <= PLAYING_STATE:
                 self.menu_container.hide()
@@ -594,22 +563,14 @@ class PingPY:
                     #Drawing pymunk debug draw
                     self.space.debug_draw(self.options)
 
-                #Drawing current fps
-                self.screen.blit(self.debug_font.render(f"{fps} fps", True, "#FFFFFF", "#000000"), (0, 0))
-
-                #Drawing the value of the state var
-                self.screen.blit(self.debug_font.render(f"state: {STATES[self.state]} ({self.state})", True, "#FFFFFF", "#000000"), (0, 24))
-                
-                #Drawing the value of the grid size var
-                self.screen.blit(self.debug_font.render(f"grid size: {(self.sizes[self.grid_size], self.sizes[self.grid_size])})", True, "#FFFFFF", "#000000"), (0, 48))
-
+                debug_info = [f"{fps} fps", f"state: {STATES[self.state]} ({self.state})", f"grid_size: {(self.sizes[self.grid_size], self.sizes[self.grid_size])}"]
+                self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
 
             #Displaying on window
-            pg.display.update()
+            self.flip()
         pg.quit()
 
 
 #Launching the game
 if __name__ == "__main__":
-    ping = PingPY(flags=pg.NOFRAME, caption="PingPY", theme_path="_internal\\theme.json")
-    ping.run()
+    PingPY().run()
