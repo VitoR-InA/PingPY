@@ -82,8 +82,8 @@ class PingPY(Window):
         #Defining ball vars
         self.ball_default_pos = (self.size[0] / 2, self.size[1] - 100)
 
-        self.sounds["Jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump.wav")
-        self.sounds["Jump2"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump2.wav")
+        self.sounds["jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump.wav")
+        self.sounds["jump2"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump2.wav")
 
         #Defining player vars
         self.score = 0
@@ -269,6 +269,7 @@ class PingPY(Window):
 
 
     def process_controls(self):
+        "SOON"
         pass
 
 
@@ -277,7 +278,7 @@ class PingPY(Window):
         collided_shape = arbiter.shapes[1]
         space.remove(collided_shape.body, collided_shape)
         self.grid.remove(collided_shape.body, collided_shape)
-        self.master.play(self.sounds[f"Jump{randint(1, 2)}"])
+        self.master.play(self.sounds[f"jump{randint(1, 2)}"])
         self.score += 5
         return True
 
