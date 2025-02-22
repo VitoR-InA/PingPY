@@ -1,18 +1,19 @@
-import pygame as pg
+import pygame
+from pygame import Rect
 
-import pymunk as pm
+import pymunk
 
 
 class HollowBox:
     def __init__(self,
-                 rect: pg.Rect,
+                 rect: Rect,
                  width: int,
-                 space: pm.Space):
+                 space: pymunk.Space):
         self.shapes = []
         points = [rect.topleft, rect.topright, rect.bottomright, rect.bottomleft, rect.topleft]
         for i in range(len(points) - 1):
-            segment = pm.Segment(space.static_body, points[i], points[i + 1], width)
-            segment.elasticity = 1
+            segment = pymunk.Segment(space.static_body, points[i], points[i + 1], width)
+            segment.elasticity = 1.005
             segment.friction = 0
             self.shapes.append(segment)
             space.add(segment)

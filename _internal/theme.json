@@ -3,28 +3,11 @@
     {
         "colours":
         {
-            "normal_text":"#FFFFFF",
-            "hovered_text":"#FFFFFF",
-            "active_text":"#FFFFFF"
+            "normal_text": "#FFFFFF",
+            "hovered_text": "#FFFFFF",
+            "active_text": "#FFFFFF"
         }
     },
 
-    "#question_button":
-    {
-        "colours":
-        {
-            "hovered_bg":"#4C5052",
-            "hovered_border":"#545759",
-            "active_bg":"#4C5052",
-            "active_border":"#545759"
-        }
-    },
-
-    "label":
-    {
-        "font":
-        {
-            "size":"20"
-        }
-    }
+    "label": {"font": {"size": "20"}}
 }

@@ -1,21 +1,21 @@
-from _internal.GameClasses.Utils.RectUtils import RectUtils
+import pygame
+from pygame import Rect
 
-import pygame as pg
-
-import pymunk as pm
+import pymunk
 
 
 class Player:
     def __init__(self,
-                 rect: pg.Rect,
+                 rect: Rect,
                  health: int,
                  speed: int,
-                 space: pm.Space):
+                 space: pymunk.Space):
         #Player rect
-        self.rect = RectUtils.index_rect(rect)
+        self.rect = rect
 
         #Player health
         self.health = health
+        self.max_health = health
         self.colors = []
         for heart in range(1, self.health + 1):
             factor = heart / health
@@ -27,12 +27,12 @@ class Player:
         self.speed = speed
         
         #Player body
-        self.body = pm.Body(body_type=pm.Body.KINEMATIC)
+        self.body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
         self.body.position = self.rect.topleft
         
         #Player shape
-        self.shape = pm.Poly.create_box(self.body, self.rect.size)
-        self.shape.elasticity = 1
+        self.shape = pymunk.Poly.create_box(self.body, self.rect.size)
+        self.shape.elasticity = 1.005
         self.shape.friction = 0
         
         #Add player to space
@@ -43,15 +43,10 @@ class Player:
         self.shape.color = self.colors[self.health]
 
         #Draw player
-        pg.draw.rect(surface, self.shape.color, pg.Rect((self.body.position[0] - self.rect.size[0] / 2, self.body.position[1] - self.rect.size[1] / 2), self.rect.size))
+        pygame.draw.rect(surface, self.shape.color, Rect((self.body.position[0] - self.rect.size[0] / 2, self.body.position[1] - self.rect.size[1] / 2), self.rect.size))
 
     def set_position(self, position):
         self.body.position = position
 
     def take_damage(self, damage: int = 1):
         self.health -= damage
-
-    def update(self, time_delta: float):
-        keys = pg.key.get_pressed()
-        if keys[pg.K_a] or keys[pg.K_LEFT]:
-            self.body.velocity = ()

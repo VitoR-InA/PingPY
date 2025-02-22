@@ -1,25 +1,26 @@
-from _internal.GameClasses.Utils.RectUtils import RectUtils
+import pygame
+from pygame import Rect
 
-import pygame as pg
-import pymunk as pm
+import pymunk
 
 from random import randint
-from typing import Tuple
+
+import typing
 
 
 class Grid:
     def __init__(self,
-                 rect: pg.Rect | pg.typing.RectLike,
-                 count: Tuple[int, int],
-                 space: pm.Space):
+                 rect: Rect,
+                 count: pygame.typing.Point,
+                 space: pymunk.Space):
         """
         Creates grid made from pymunk bodies
 
         Args:
-            count (Tuple[int, int]): Defines the number of bodies in length and width
-            space (pm.Space): Defines space where the Grid should be added
+            count (pygame.typing.Point): Defines the number of bodies in length and width
+            space (pymunk.Space): Defines space where the Grid should be added
         """
-        self.rect = RectUtils.index_rect(rect)
+        self.rect = rect
         
         self.cell_width = self.rect.width / count[0]
         self.cell_height = self.rect.height / count[1]
@@ -28,18 +29,18 @@ class Grid:
         self.offset_x = grid_center[0] - (count[0] - 1) * self.cell_width / 2
         self.offset_y = grid_center[1] - (count[1] - 1) * self.cell_height / 2
         
-        self.bodies = []
-        self.shapes = []
+        self.bodies: typing.List[pymunk.Body] = []
+        self.shapes: typing.List[pymunk.Shape] = []
 
         for x in range(count[0]):
             for y in range(count[1]):
                 new_x = self.offset_x + x * self.cell_width
                 new_y = self.offset_y + y * self.cell_height
 
-                body = pm.Body(body_type=pm.Body.STATIC)
+                body = pymunk.Body(body_type=pymunk.Body.STATIC)
                 body.position = (new_x, new_y)
 
-                shape = pm.Poly.create_box(body, (self.cell_width, self.cell_height))
+                shape = pymunk.Poly.create_box(body, (self.cell_width, self.cell_height))
                 shape.color = (randint(25, 255), randint(25, 255), randint(25, 255), 255)
                 shape.elasticity = 1.003
                 shape.collision_type = 2
@@ -49,18 +50,18 @@ class Grid:
                 space.add(body, shape)
 
     @classmethod
-    def draw_test_grid(self,
-                       rect: pg.Rect | pg.typing.RectLike,
-                       count: Tuple[int, int],
-                       surface: pg.Surface):
+    def draw_preview(self,
+                     rect: Rect,
+                     count: pygame.typing.Point,
+                     surface: pygame.Surface):
         """
         Draws test grid without space bodies
 
         Args:
-            count (Tuple[int, int]): Defines the number of bodies in length and width
-            surface (pg.Surface): _description_
+            count (pygame.typing.Point): Defines the number of bodies in length and width
+            surface (pygame.Surface): _description_
         """
-        self.rect = RectUtils.index_rect(rect)
+        self.rect = rect
         
         cell_width = self.rect.width / count[0]
         cell_height = self.rect.height / count[1]
@@ -74,20 +75,25 @@ class Grid:
                 new_x = offset_x + x * cell_width
                 new_y = offset_y + y * cell_height
                 
-                pg.draw.rect(surface, "#FFFFFF", ((new_x - cell_width / 2, new_y - cell_height / 2),
+                pygame.draw.rect(surface, "#FFFFFF", ((new_x - cell_width / 2, new_y - cell_height / 2),
                                                   (cell_width, cell_height)), 1)
 
-    def draw(self, surface: pg.Surface):
+    def draw(self, surface: pygame.Surface):
         for num, body in enumerate(self.bodies):
-            pg.draw.rect(surface, self.shapes[num].color, ((body.position[0] - self.cell_width / 2, body.position[1] - self.cell_height / 2),
+            pygame.draw.rect(surface, self.shapes[num].color, ((body.position[0] - self.cell_width / 2, body.position[1] - self.cell_height / 2),
                                                            (self.cell_width, self.cell_height + 1)))
 
-    def remove(self, body: pm.Body, shape: pm.Shape):
-        self.bodies.remove(body)
-        self.shapes.remove(shape)
+    def clear(self):
+        for body in self.bodies:
+            for shape in body.shapes:
+                if shape in body.space.shapes:
+                    body.space.remove(shape)
+                if shape in self.shapes:
+                    self.shapes.remove(shape)
+            self.bodies.remove(body)
+            body.space.remove(body)
 
-    def get_shapes(self):
-        return self.shapes
-
-    def get_bodies(self):
-        return self.bodies
+    def remove(self, *objs):
+        for obj in objs:
+            if isinstance(obj, pymunk.Body) and obj in self.bodies: self.bodies.remove(obj)
+            elif isinstance(obj, pymunk.Shape) and obj in self.shapes: self.shapes.remove(obj)
