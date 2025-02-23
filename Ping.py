@@ -242,6 +242,13 @@ class PingPY(Window):
         else: return os.path.join(os.path.abspath(__file__), "_internal")
 
 
+    @classmethod
+    def get_execpath(self):
+        "!Not using yet!" #TODO return logger, which will be paired to executable path
+        if hasattr(sys, "frozen"): return os.path.dirname(sys.executable)
+        else: return os.path.abspath(__file__)
+
+
     def goto(self, state: str):
         self.state = list(STATES.values()).index(f"{state.upper()}_STATE")
         for container_name in [attr for attr in dir(self) if attr.endswith("_container")]:
@@ -406,7 +413,7 @@ class PingPY(Window):
     def process_render(self):
         if self.state == THROWING_STATE: self.ball_start_velocity = self.ball.draw_arrow(self.screen)
 
-        if self.state == MENU_STATE: self.screen.blit(self.header_font.render("PingPY", True, "#FFFFFF"), (10, 0))
+        if self.state == MENU_STATE: self.screen.blit(self.header_font.render(self.title, True, "#FFFFFF"), (10, 0))
 
         elif self.state == SHOP_STATE:
             self.screen.blit(self.header_font.render("Shop", True, "#FFFFFF"), (10, 0))
