@@ -88,10 +88,9 @@ class Grid:
             for shape in body.shapes:
                 if shape in body.space.shapes:
                     body.space.remove(shape)
-                if shape in self.shapes:
-                    self.shapes.remove(shape)
-            self.bodies.remove(body)
             body.space.remove(body)
+        self.bodies.clear()
+        self.shapes.clear()
 
     def remove(self, *objs):
         for obj in objs:
