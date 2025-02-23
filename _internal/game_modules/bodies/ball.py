@@ -11,14 +11,11 @@ class Ball:
                  center: pygame.typing.Point,
                  radius: float,
                  space: pymunk.Space):
-        #Ball radius
-        self.radius = radius
-
         #Ball angle
         self.angle = 90
 
         #Ball body
-        self.moment = pymunk.moment_for_circle(10, self.radius, 0)
+        self.moment = pymunk.moment_for_circle(10, radius, 0)
         self.body = pymunk.Body(10, self.moment)
         self.body.position = center
 
@@ -33,16 +30,20 @@ class Ball:
 
     def draw_arrow(self, surface: pygame.Surface):
         "Draws arrow at given coordinates, defines ball direction"
-        end_x = self.body.position[0] + 50 * cos(radians(self.angle))
-        end_y = self.body.position[1] - 50 * sin(radians(self.angle))
+        size_factor = self.shape.radius / 3
 
-        left_end_x = end_x + 25 * cos(radians(self.angle + 140))
-        left_end_y = end_y - 25 * sin(radians(self.angle + 140))
-        right_end_x = end_x + 25 * cos(radians(self.angle - 140))
-        right_end_y = end_y - 25 * sin(radians(self.angle - 140))
+        arrow_length = round(50 / size_factor)
+        end_x = self.body.position[0] + arrow_length * cos(radians(self.angle))
+        end_y = self.body.position[1] - arrow_length * sin(radians(self.angle))
 
-        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (left_end_x, left_end_y), 3)
-        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (right_end_x, right_end_y), 3)
+        arrow_sides_length = round(25 / size_factor)
+        left_end_x = end_x + arrow_sides_length * cos(radians(self.angle + 140))
+        left_end_y = end_y - arrow_sides_length * sin(radians(self.angle + 140))
+        right_end_x = end_x + arrow_sides_length * cos(radians(self.angle - 140))
+        right_end_y = end_y - arrow_sides_length * sin(radians(self.angle - 140))
+
+        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (left_end_x, left_end_y), round(3 / size_factor))
+        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (right_end_x, right_end_y), round(3 / size_factor))
 
         return (end_x - self.body.position[0], end_y - self.body.position[1])
 
@@ -53,4 +54,4 @@ class Ball:
         self.body.position = position
         
     def draw(self, surface):
-        pygame.draw.circle(surface, self.shape.color, self.body.position, self.radius)
+        pygame.draw.circle(surface, self.shape.color, self.body.position, self.shape.radius)
