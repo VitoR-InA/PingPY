@@ -91,13 +91,16 @@ class PingPY(Window):
 
         "====----    Game vars     ----===="
         #Defining ball vars
-        self.ball_default_pos = (self.size[0] / 2, self.size[1] - 100)
+        self.ball_color = BALL_DEFAULT_COLOR
+        self.ball_pos = (self.size[0] / 2, self.size[1] - 100)
+        self.ball_radius = BALL_DEFAULT_RADIUS
 
         #Defining player vars
-        self.score = 0
-        self.player_speed = PLAYER_DEFAULT_SPEED
         self.player_health = PLAYER_DEFAULT_HEALTH
-        self.player_default_pos = (self.size[0] / 2, self.size[1] - 50)
+        self.player_score = PLAYER_DEFAULT_SCORE
+        self.player_size = PLAYER_DEFAULT_SIZE
+        self.player_speed = PLAYER_DEFAULT_SPEED
+        self.player_pos = (self.size[0] / 2, self.size[1] - 50)
 
         #Defining walls
         HollowBox(Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
@@ -206,12 +209,12 @@ class PingPY(Window):
 
         "====----   Score label    ----===="
         #Defining score container
-        self.score_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False)
+        self.player_score_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False)
 
         temp_rect.size = gui_size
         temp_rect.topright = (-spacing, spacing)
-        UIPanel(temp_rect, manager = self.ui_manager, container = self.score_container, anchors = {"right":"right", "top":"top"})
-        self.player_score_lbl = UILabel(temp_rect, "Score", self.ui_manager, self.score_container, anchors = {"right":"right", "top":"top"})
+        UIPanel(temp_rect, manager = self.ui_manager, container = self.player_score_container, anchors = {"right":"right", "top":"top"})
+        self.player_score_lbl = UILabel(temp_rect, "Score", self.ui_manager, self.player_score_container, anchors = {"right":"right", "top":"top"})
 
 
         "====----      Fonts       ----===="
@@ -249,16 +252,16 @@ class PingPY(Window):
     def reset_player(self, damage: int):
         self.master.play(self.sounds["player_damage"])
         self.player.take_damage(damage)
-        self.player.set_position(self.player_default_pos)
-        self.ball.set_position(self.ball_default_pos)
+        self.player.set_position(self.player_pos)
+        self.ball.set_position(self.ball_pos)
         self.ball.set_angle(90)
         self.goto("THROWING")
 
 
     def new_level(self):
         "Starts new level"
-        self.player = Player(Rect(self.player_default_pos, (250, 20)), self.player_health, self.player_speed, self.space)
-        self.ball = Ball(RED, self.ball_default_pos, 10, self.space)
+        self.player = Player(Rect(self.player_pos, self.player_size), self.player_health, self.player_speed, self.space)
+        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius, self.space)
         self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game_start"])
@@ -281,7 +284,7 @@ class PingPY(Window):
         space.remove(collided_shape.body, collided_shape)
         self.grid.remove(collided_shape.body, collided_shape)
         self.master.play(self.sounds[f"jump{randint(1, 2)}"])
-        self.score += 5
+        self.player_score += 5
         return True
 
 
@@ -303,20 +306,20 @@ class PingPY(Window):
                 "====---- Upgrades ----===="
                 #Speed upgrade
                 if event.ui_element == self.player_speed_minus and self.player_speed > 500:
-                    self.score += 125
+                    self.player_score += 125
                     self.player_speed -= 50
 
-                if event.ui_element == self.player_speed_plus and self.score >= 250 and self.player_speed < 1000:
-                    self.score -= 250
+                if event.ui_element == self.player_speed_plus and self.player_score >= 250 and self.player_speed < 1000:
+                    self.player_score -= 250
                     self.player_speed += 50
 
                 #Health upgrade
                 if event.ui_element == self.player_health_minus and self.player_health > 3:
-                    self.score += 250
+                    self.player_score += 250
                     self.player_health -= 1
 
-                if event.ui_element == self.player_health_plus and self.score >= 500 and self.player_health < 10:
-                    self.score -= 500
+                if event.ui_element == self.player_health_plus and self.player_score >= 500 and self.player_health < 10:
+                    self.player_score -= 500
                     self.player_health += 1
 
             "====---- Slider event ----===="
@@ -337,9 +340,9 @@ class PingPY(Window):
 
         "====----  Holded keys   ----===="
         if self.state == SHOP_STATE or (holded_keys[pygame.K_TAB] and self.state != SHOP_STATE):
-            self.player_score_lbl.set_text(f"Score: {self.score}")
-            self.score_container.show()
-        else: self.score_container.hide()
+            self.player_score_lbl.set_text(f"Score: {self.player_score}")
+            self.player_score_container.show()
+        else: self.player_score_container.hide()
 
         if hasattr(self, "player") and hasattr(self, "ball"):
             if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
@@ -347,7 +350,7 @@ class PingPY(Window):
                     self.ball.angle += 100 * self.time_delta
 
                 if self.state == PLAYING_STATE and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
-                    self.player.body.velocity = (-self.player_speed, 0)
+                    self.player.body.velocity = (-self.player.speed, 0)
 
                 else: self.player.body.velocity = (0, 0)
 
@@ -356,7 +359,7 @@ class PingPY(Window):
                     self.ball.angle -= 100 * self.time_delta
 
                 if self.state == PLAYING_STATE and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
-                    self.player.body.velocity = (self.player_speed, 0)
+                    self.player.body.velocity = (self.player.speed, 0)
 
                 else: self.player.body.velocity = (0, 0)
 
@@ -387,7 +390,7 @@ class PingPY(Window):
 
             #Game over when the player's health == 0
             if not self.player.health:
-                self.score += (500 * (self.grid_size + 1) + self.player.health * 25)
+                self.player_score += (500 * (self.grid_size + 1) + self.player.health * 25)
                 timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player_die"])
                 self.goto("DIED")
