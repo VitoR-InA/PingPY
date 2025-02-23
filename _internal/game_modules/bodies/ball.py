@@ -30,20 +30,20 @@ class Ball:
 
     def draw_arrow(self, surface: pygame.Surface):
         "Draws arrow at given coordinates, defines ball direction"
-        size_factor = self.shape.radius / 3
+        size_factor = self.shape.radius / 10
 
-        arrow_length = round(50 / size_factor)
+        arrow_length = round(50 * size_factor)
         end_x = self.body.position[0] + arrow_length * cos(radians(self.angle))
         end_y = self.body.position[1] - arrow_length * sin(radians(self.angle))
 
-        arrow_sides_length = round(25 / size_factor)
+        arrow_sides_length = round(25 * size_factor)
         left_end_x = end_x + arrow_sides_length * cos(radians(self.angle + 140))
         left_end_y = end_y - arrow_sides_length * sin(radians(self.angle + 140))
         right_end_x = end_x + arrow_sides_length * cos(radians(self.angle - 140))
         right_end_y = end_y - arrow_sides_length * sin(radians(self.angle - 140))
 
-        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (left_end_x, left_end_y), round(3 / size_factor))
-        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (right_end_x, right_end_y), round(3 / size_factor))
+        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (left_end_x, left_end_y), round(3 * size_factor))
+        pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (right_end_x, right_end_y), round(3 * size_factor))
 
         return (end_x - self.body.position[0], end_y - self.body.position[1])
 
