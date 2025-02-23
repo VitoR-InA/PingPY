@@ -8,7 +8,6 @@ class Player:
     def __init__(self,
                  rect: Rect,
                  health: int,
-                 speed: int,
                  space: pymunk.Space):
         #Player rect
         self.rect = rect
@@ -22,9 +21,6 @@ class Player:
             self.colors.append((int(255 * factor), int(255 * (1 - factor)), 0, 255))
         self.colors.append((7, 7, 7, 255))
         self.colors.reverse()
-
-        #Player speed
-        self.speed = speed
         
         #Player body
         self.body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)

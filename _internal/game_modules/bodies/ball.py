@@ -7,18 +7,22 @@ import pymunk
 
 class Ball:
     def __init__(self,
-                 color: pygame,
+                 color: pygame.Color,
                  center: pygame.typing.Point,
                  radius: float,
                  space: pymunk.Space):
+        #Ball radius
         self.radius = radius
+
+        #Ball angle
         self.angle = 90
 
-        self.mass = 1
-        self.moment = pymunk.moment_for_circle(self.mass, self.radius, 0)
-        self.body = pymunk.Body(self.mass, self.moment)
+        #Ball body
+        self.moment = pymunk.moment_for_circle(10, self.radius, 0)
+        self.body = pymunk.Body(10, self.moment)
         self.body.position = center
 
+        #Ball shape
         self.shape = pymunk.Circle(self.body, radius)
         self.shape.collision_type = 1
         self.shape.elasticity = 1.005
