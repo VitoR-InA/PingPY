@@ -16,11 +16,5 @@ cd PingPY
 ```sh
 pyinstaller --windowed --clean Ping.py
 ```
-**!The game uses the _internal folder to store logs and music, the absence of logs and music folders will cause the game to crash!** Before playing, copy the music and logs folders from _internal to dest\\_internal after building via pyinstaller
-
-### or you can use [build.bat](build.bat)
-```sh
-build
-```
 
 > See [pygame gui freezing issue](https://pygame-gui.readthedocs.io/en/latest/freezing.html) if you have any problems
