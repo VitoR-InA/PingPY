@@ -114,16 +114,15 @@ class PingPY(Window):
         self.menu_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager)
 
         #Defining volume slider
-        self.volume_sldr = UIHorizontalSlider(Rect((10, -(gui_size[1] + 10)), gui_size),
-                                              100, (0, 100), self.ui_manager, self.menu_container,
+        temp_rect.size = gui_size
+        temp_rect.bottomleft = (spacing, - spacing)
+        self.volume_sldr = UIHorizontalSlider(temp_rect, 100, (0, 100), self.ui_manager, self.menu_container,
                                               anchors = {"bottom":"bottom"})
         #Defining volume slider label
-        UILabel(Rect((10, -(gui_size[1] + 10)), gui_size),
-                "Volume", self.ui_manager, self.menu_container,
+        UILabel(temp_rect, "Volume", self.ui_manager, self.menu_container,
                 anchors = {"bottom":"bottom"})
 
         #Defining play button
-        temp_rect.size = gui_size
         temp_rect.bottomright = (-spacing, -(spacing * 3 + gui_size[1] * 2))
         UIButton(temp_rect, "Play", self.ui_manager, self.menu_container, command = lambda: self.goto("PREPARATION"),
                  anchors = {"right":"right", "bottom":"bottom"})
@@ -159,8 +158,8 @@ class PingPY(Window):
         self.grid_size = 1
 
         #Defining start button
-        UIButton(Rect((-(gui_size[0] + spacing), -(gui_size[1] + spacing)), gui_size), 
-                 "Start", self.ui_manager, self.preparation_container, command = self.new_level,
+        temp_rect.bottomright = (-spacing, - spacing)
+        UIButton(temp_rect, "Start", self.ui_manager, self.preparation_container, command = self.new_level,
                  anchors = {"right":"right", "bottom":"bottom"})
 
         "====----    Shop menu     ----===="
