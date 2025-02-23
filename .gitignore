@@ -1,7 +1,5 @@
 .vscode
-.gitignore
 __pycache__
-*.data
 build
 dist
 *.spec
