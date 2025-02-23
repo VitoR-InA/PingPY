@@ -92,8 +92,8 @@ class PingPY(Window):
         "====----    Game vars     ----===="
         #Defining ball vars
         self.ball_color = BALL_DEFAULT_COLOR
-        self.ball_pos = (self.size[0] / 2, self.size[1] - 100)
         self.ball_radius = BALL_DEFAULT_RADIUS
+        self.ball_pos = (self.size[0] / 2, self.size[1] - 100)
 
         #Defining player vars
         self.player_health = PLAYER_DEFAULT_HEALTH
