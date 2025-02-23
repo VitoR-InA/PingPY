@@ -197,7 +197,7 @@ class PingPY(Window):
         #LEFT TARGET ISSUE: https://github.com/MyreMylar/pygame_gui/issues/671
         temp_rect.size = (gui_size[1], ) * 2
 
-        temp_rect.bottomleft = (-gui_size[0] - gui_size[1] - spacing, -spacing)
+        temp_rect.bottomright = (-gui_size[0] - spacing, -spacing)
         self.player_speed_minus = UIButton(temp_rect, "-", self.ui_manager, self.shop_container, "Speed -50\nScore +125\nMIN: 500",
                                            anchors = {"left_target":self.player_speed_lbl, "bottom":"bottom"})
 
@@ -271,9 +271,16 @@ class PingPY(Window):
 
     def new_level(self):
         "Starts new level"
-        self.player = Player(Rect(self.player_pos, [point * self.size_factor for point in self.player_size]), self.player_health, self.player_speed * self.size_factor, self.space)
-        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius * self.size_factor, self.space)
-        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
+        player_size = [point * self.size_factor for point in self.player_size]
+        self.player = Player(Rect(self.player_pos, player_size), self.player_health)
+        self.space.add(self.player, self.player.shape)
+
+        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius * self.size_factor)
+        self.space.add(self.ball, self.ball.shape)
+
+        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]))
+        self.space.add(*self.grid.bodies, *self.grid.shapes)
+
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game_start"])
         self.goto("THROWING")
@@ -283,8 +290,8 @@ class PingPY(Window):
         "Stops current level"
         if timer_id: timer.kill_timer(timer_id)
         self.grid.clear()
-        self.space.remove(self.player.body, self.player.shape)
-        self.space.remove(self.ball.body, self.ball.shape)
+        self.space.remove(self.player, self.player.shape)
+        self.space.remove(self.ball, self.ball.shape)
         pygame.mixer.music.unpause()
         self.goto("MENU")
 
@@ -297,6 +304,55 @@ class PingPY(Window):
         self.master.play(self.sounds[f"jump{randint(1, 2)}"])
         self.player_score += 5
         return True
+
+
+    def process_controls(self):
+        "Processes all keystrokes"
+        "====---- Player control ----===="
+        holded_keys = pygame.key.get_pressed()
+        pressed_keys = pygame.key.get_just_pressed()
+
+        "====----  Holded keys   ----===="
+        if self.state == SHOP_STATE or (holded_keys[pygame.K_TAB] and self.state in [THROWING_STATE, PLAYING_STATE]):
+            self.player_score_lbl.set_text(f"Score: {self.player_score}")
+            self.player_score_container.show()
+        else: self.player_score_container.hide()
+
+        if hasattr(self, "player") and hasattr(self, "ball"):
+            if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
+                if self.state == THROWING_STATE and self.ball.arrow_angle < 135:
+                    self.ball.arrow_angle += 100 * self.time_delta
+
+                if self.state == PLAYING_STATE and self.player.rect.left > 0:
+                    self.player.velocity = (-self.player_speed * self.size_factor, 0)
+
+                else: self.player.velocity = (0, 0)
+
+            elif holded_keys[pygame.K_d] or holded_keys[pygame.K_RIGHT]:
+                if self.state == THROWING_STATE and self.ball.arrow_angle > 45:
+                    self.ball.arrow_angle -= 100 * self.time_delta
+
+                if self.state == PLAYING_STATE and self.player.rect.right < self.size[0]:
+                    self.player.velocity = (self.player_speed * self.size_factor, 0)
+
+                else: self.player.velocity = (0, 0)
+
+            else: self.player.velocity = (0, 0)
+
+        "====----  Pressed keys  ----===="
+        if pressed_keys[pygame.K_F3]: self.debug = not self.debug # Toggle debug
+
+        if self.state == THROWING_STATE and pressed_keys[pygame.K_SPACE]:
+            self.ball_speed = [vel * 20 for vel in self.ball_start_velocity]
+            self.ball.velocity = self.ball_speed
+            self.state = PLAYING_STATE
+
+        if self.state == PLAYING_STATE and pressed_keys[pygame.K_q]:
+             self.reset_player(PLAYER_DEFAULT_DAMAGE)
+
+        if pressed_keys[pygame.K_ESCAPE]:
+            if self.state in [THROWING_STATE, PLAYING_STATE]: self.end_level()
+            elif self.state in [SHOP_STATE, PREPARATION_STATE]: self.goto("MENU")
 
 
     def process_events(self):
@@ -343,77 +399,30 @@ class PingPY(Window):
                     self.grid_size = event.value
 
 
-    def process_controls(self):
-        "Processes all keystrokes"
-        "====---- Player control ----===="
-        holded_keys = pygame.key.get_pressed()
-        pressed_keys = pygame.key.get_just_pressed()
-
-        "====----  Holded keys   ----===="
-        if self.state == SHOP_STATE or (holded_keys[pygame.K_TAB] and self.state != SHOP_STATE):
-            self.player_score_lbl.set_text(f"Score: {self.player_score}")
-            self.player_score_container.show()
-        else: self.player_score_container.hide()
-
-        if hasattr(self, "player") and hasattr(self, "ball"):
-            if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
-                if self.state == THROWING_STATE and self.ball.angle < 135:
-                    self.ball.angle += 100 * self.time_delta
-
-                if self.state == PLAYING_STATE and self.player.body.position[0] - self.player.rect.size[0] / 2 > 0:
-                    self.player.body.velocity = (-self.player.speed, 0)
-
-                else: self.player.body.velocity = (0, 0)
-
-            elif holded_keys[pygame.K_d] or holded_keys[pygame.K_RIGHT]:
-                if self.state == THROWING_STATE and self.ball.angle > 45:
-                    self.ball.angle -= 100 * self.time_delta
-
-                if self.state == PLAYING_STATE and self.player.body.position[0] + self.player.rect.size[0] / 2 < self.size[0]:
-                    self.player.body.velocity = (self.player.speed, 0)
-
-                else: self.player.body.velocity = (0, 0)
-
-            else: self.player.body.velocity = (0, 0)
-
-        "====----  Pressed keys  ----===="
-        if pressed_keys[pygame.K_F3]: self.debug = not self.debug # Toggle debug
-
-        if self.state == THROWING_STATE and pressed_keys[pygame.K_SPACE]:
-            self.ball_speed = [vel * 20 for vel in self.ball_start_velocity]
-            self.ball.body.velocity = self.ball_speed
-            self.state = PLAYING_STATE
-
-        if self.state == PLAYING_STATE and pressed_keys[pygame.K_q]:
-             self.reset_player(PLAYER_DEFAULT_DAMAGE)
-
-        if pressed_keys[pygame.K_ESCAPE]:
-            if self.state in [THROWING_STATE, PLAYING_STATE]: self.end_level()
-            elif self.state in [SHOP_STATE, PREPARATION_STATE]: self.goto("MENU")
-
-
     def process_player_events(self):
         "Processes player events. Such as winning, losing, and taking damage."
         if self.state in [THROWING_STATE, PLAYING_STATE]:
             #Decrease player's health by 1
-            if self.ball.body.position[1] > self.size[1]:
+            if self.ball.position[1] > self.size[1]:
                 self.reset_player(PLAYER_DEFAULT_DAMAGE)
 
             #Game over when the player's health == 0
             if not self.player.health:
-                self.player_score += (500 * (self.grid_size + 1) + self.player.health * 25)
                 timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player_die"])
                 self.goto("DIED")
 
             #Game win when ball breaks all grid bodies
             if not len(self.grid.shapes):
+                self.player_score += (500 * (self.grid_size + 1) + self.player.health * 25)
                 timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player_win"])
                 self.goto("WINNED")
 
 
     def process_render(self):
+        self.ui_manager.draw_ui(self.screen)
+
         if self.state == THROWING_STATE: self.ball_start_velocity = self.ball.draw_arrow(self.screen)
 
         if self.state == MENU_STATE: self.screen.blit(self.header_font.render(self.title, True, "#FFFFFF"), (10, 0))
@@ -472,7 +481,6 @@ class PingPY(Window):
             "====----  Draw  ----===="
             self.screen.fill("#070707")
             self.process_render()
-            self.ui_manager.draw_ui(self.screen)
             self.process_render_debug()
 
             #Displaying on window
