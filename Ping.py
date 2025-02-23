@@ -33,7 +33,7 @@ class PingPY(Window):
         pygame.init()
         pygame.mixer.init()
 
-        super().__init__("PingPY", (800, 600))
+        super().__init__("PingPY", fullscreen_desktop = True)
 
         #Defining window vars
         self.clock = pygame.time.Clock()
