@@ -103,7 +103,8 @@ class PingPY(Window):
         self.player_pos = (self.size[0] / 2, self.size[1] - 50)
 
         #Defining walls
-        HollowBox(Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
+        HollowBox(Rect(-WALL_DEFAULT_WIDTH - 1, -WALL_DEFAULT_WIDTH - 1, self.size[0] + WALL_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50)
+                  , WALL_DEFAULT_WIDTH, self.space)
 
 
         "====----       GUI        ----===="
