@@ -3,6 +3,8 @@ from pygame import Rect
 
 import pymunk
 
+from itertools import product
+
 from random import randint
 
 import typing
@@ -11,8 +13,7 @@ import typing
 class Grid:
     def __init__(self,
                  rect: Rect,
-                 count: pygame.typing.Point,
-                 space: pymunk.Space):
+                 count: pygame.typing.Point):
         """
         Creates grid made from pymunk bodies
 
@@ -32,22 +33,20 @@ class Grid:
         self.bodies: typing.List[pymunk.Body] = []
         self.shapes: typing.List[pymunk.Shape] = []
 
-        for x in range(count[0]):
-            for y in range(count[1]):
-                new_x = self.offset_x + x * self.cell_width
-                new_y = self.offset_y + y * self.cell_height
+        for x, y in product(range(count[0]), range(count[1])):
+            new_x = self.offset_x + x * self.cell_width
+            new_y = self.offset_y + y * self.cell_height
 
-                body = pymunk.Body(body_type=pymunk.Body.STATIC)
-                body.position = (new_x, new_y)
+            body = pymunk.Body(body_type=pymunk.Body.STATIC)
+            body.position = (new_x, new_y)
 
-                shape = pymunk.Poly.create_box(body, (self.cell_width, self.cell_height))
-                shape.color = (randint(25, 255), randint(25, 255), randint(25, 255), 255)
-                shape.elasticity = 1.003
-                shape.collision_type = 2
-                
-                self.bodies.append(body)
-                self.shapes.append(shape)
-                space.add(body, shape)
+            shape = pymunk.Poly.create_box(body, (self.cell_width, self.cell_height))
+            shape.color = (randint(25, 255), randint(25, 255), randint(25, 255), 255)
+            shape.elasticity = 1.005
+            shape.collision_type = 2
+            
+            self.bodies.append(body)
+            self.shapes.append(shape)
 
     @classmethod
     def draw_preview(self,
