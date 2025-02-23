@@ -195,18 +195,20 @@ class PingPY(Window):
 
 
         #LEFT TARGET ISSUE: https://github.com/MyreMylar/pygame_gui/issues/671
-        self.player_speed_minus = UIButton(Rect((-(gui_size[0] + gui_size[1] + spacing), -(gui_size[1] + spacing)), (gui_size[1], ) * 2),
-                                           "-", self.ui_manager, self.shop_container, "Speed -50\nScore +125\nMIN: 500",
+        temp_rect.size = (gui_size[1], ) * 2
+
+        temp_rect.bottomleft = (-gui_size[0] - gui_size[1] - spacing, -spacing)
+        self.player_speed_minus = UIButton(temp_rect, "-", self.ui_manager, self.shop_container, "Speed -50\nScore +125\nMIN: 500",
                                            anchors = {"left_target":self.player_speed_lbl, "bottom":"bottom"})
-        self.player_speed_plus = UIButton(Rect((spacing, -(gui_size[1] + spacing)), (gui_size[1], ) * 2),
-                                          "+", self.ui_manager, self.shop_container, "Speed +50\nScore -250\nMAX: 1000",
+
+        self.player_health_minus = UIButton(temp_rect, "-", self.ui_manager, self.shop_container, "Health -1\nScore +250\nMIN: 3",
+                                            anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
+
+        temp_rect.bottomleft = (spacing, -spacing)
+        self.player_speed_plus = UIButton(temp_rect, "+", self.ui_manager, self.shop_container, "Speed +50\nScore -250\nMAX: 1000",
                                           anchors = {"left_target":self.player_speed_lbl, "bottom":"bottom"})
 
-        self.player_health_minus = UIButton(Rect((-(gui_size[0] + gui_size[1] + spacing), -(gui_size[1] + spacing)), (gui_size[1], ) * 2),
-                                            "-", self.ui_manager, self.shop_container, "Health -1\nScore +250\nMIN: 3",
-                                            anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
-        self.player_health_plus = UIButton(Rect((spacing, -(gui_size[1] + spacing)), (gui_size[1], ) * 2),
-                                           "+", self.ui_manager, self.shop_container, "Health +1\nScore -500\nMAX: 5",
+        self.player_health_plus = UIButton(temp_rect, "+", self.ui_manager, self.shop_container, "Health +1\nScore -500\nMAX: 5",
                                            anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
 
         "====----   Score label    ----===="
