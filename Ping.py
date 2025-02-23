@@ -23,7 +23,7 @@ from pymunk import pygame_util
 
 from random import randint
 
-from timer import set_timer
+import timer
 
 
 class PingPY(Window):
@@ -38,7 +38,7 @@ class PingPY(Window):
         #Defining window vars
         self.clock = pygame.time.Clock()
 
-        self.size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
+        size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
 
         multiples = self.get_multiples(self.size, 8, 20)
         self.sizes = (min(multiples), multiples[len(multiples) // 2], max(multiples))
@@ -53,13 +53,26 @@ class PingPY(Window):
 
 
         "====----      Sounds      ----===="
-        #Bodies sound channels
+        #Master pygame channel
         self.master = pygame.mixer.Channel(0)
-        self.master.set_volume(1)
-        pygame.mixer.music.load("_internal\\Sounds\\music.wav")
 
         #Sounds var
         self.sounds = {}
+
+        #Ball sounds
+        self.sounds["jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump.wav")
+        self.sounds["jump2"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump2.wav")
+
+        #Player sounds
+        self.sounds["player_damage"] = pygame.mixer.Sound("_internal\\sounds\\player\\damage.wav")
+        self.sounds["player_die"] = pygame.mixer.Sound("_internal\\sounds\\player\\die.wav")
+        self.sounds["player_win"] = pygame.mixer.Sound("_internal\\sounds\\player\\win.wav")
+
+        #Game sounds
+        self.sounds["game_start"] = pygame.mixer.Sound("_internal\\sounds\\game\\start.wav")
+
+        #Game music
+        pygame.mixer.music.load("_internal\\Sounds\\music.wav")
 
 
         "====----   Pymunk init    ----===="
@@ -76,25 +89,15 @@ class PingPY(Window):
         self.debug = False
 
 
-        "====----  Pymunk bodies   ----===="
+        "====----    Game vars     ----===="
         #Defining ball vars
         self.ball_default_pos = (self.size[0] / 2, self.size[1] - 100)
 
-        self.sounds["jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump.wav")
-        self.sounds["jump2"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump2.wav")
-
         #Defining player vars
         self.score = 0
-
         self.player_speed = PLAYER_DEFAULT_SPEED
         self.player_health = PLAYER_DEFAULT_HEALTH
         self.player_default_pos = (self.size[0] / 2, self.size[1] - 50)
-
-        self.sounds["player_damage"] = pygame.mixer.Sound("_internal\\sounds\\player\\damage.wav")
-        self.sounds["player_die"] = pygame.mixer.Sound("_internal\\sounds\\player\\die.wav")
-        self.sounds["player_win"] = pygame.mixer.Sound("_internal\\sounds\\player\\win.wav")
-
-        self.sounds["game_start"] = pygame.mixer.Sound("_internal\\sounds\\game\\start.wav")
 
         #Defining walls
         HollowBox(Rect(-11, -11, self.size[0] + 21, self.size[1] + 50), 10, self.space)
@@ -102,8 +105,8 @@ class PingPY(Window):
 
         "====----       GUI        ----===="
         #Means default gui element size
-        gui_size = (280 / self.size_factor, 80 / self.size_factor)
-        spacing = 5 / self.size_factor
+        gui_size = (280 / size_factor, 80 / size_factor)
+        spacing = 5 / size_factor
         temp_rect = Rect()
 
         "====----    Main menu     ----===="
@@ -122,12 +125,12 @@ class PingPY(Window):
         #Defining play button
         temp_rect.size = gui_size
         temp_rect.bottomright = (-spacing, -(spacing * 3 + gui_size[1] * 2))
-        UIButton(temp_rect, "Play", self.ui_manager, self.menu_container, command = lambda: self.goto("preparation"),
+        UIButton(temp_rect, "Play", self.ui_manager, self.menu_container, command = lambda: self.goto("PREPARATION"),
                  anchors = {"right":"right", "bottom":"bottom"})
 
         #Defining shop button
         temp_rect.bottomright = (-spacing, -(spacing * 2 + gui_size[1]))
-        UIButton(temp_rect, "Shop", self.ui_manager, self.menu_container, command = lambda: self.goto("shop"),
+        UIButton(temp_rect, "Shop", self.ui_manager, self.menu_container, command = lambda: self.goto("SHOP"),
                  anchors = {"right":"right", "bottom":"bottom"})
 
         #Defining exit button
@@ -142,7 +145,7 @@ class PingPY(Window):
         #Defining preparation back button
         temp_rect.size = (gui_size[1], ) * 2
         temp_rect.bottomleft = (spacing, -spacing)
-        UIButton(temp_rect, "Back", self.ui_manager, self.preparation_container, command = lambda: self.goto("menu"),
+        UIButton(temp_rect, "Back", self.ui_manager, self.preparation_container, command = lambda: self.goto("MENU"),
                  anchors = {"bottom":"bottom"})
 
         #Defining grid size slider
@@ -167,7 +170,7 @@ class PingPY(Window):
         #Defining shop back button
         temp_rect.size = (gui_size[1], ) * 2
         temp_rect.bottomleft = (spacing, -spacing)
-        UIButton(temp_rect, "Back", self.ui_manager, self.shop_container, command = lambda: self.goto("menu"),
+        UIButton(temp_rect, "Back", self.ui_manager, self.shop_container, command = lambda: self.goto("MENU"),
                  anchors = {"bottom":"bottom"})
 
         #Defining player speed upgrade
@@ -214,10 +217,10 @@ class PingPY(Window):
 
         "====----      Fonts       ----===="
         #Defining debug font
-        self.debug_font = pygame.sysfont.SysFont("NotoSans", 20 // int(self.size_factor))
+        self.debug_font = pygame.sysfont.SysFont("NotoSans", 20 // int(size_factor))
 
         #Defining header font
-        self.header_font = pygame.sysfont.SysFont("NotoSans", 170 // int(self.size_factor))
+        self.header_font = pygame.sysfont.SysFont("NotoSans", 170 // int(size_factor))
 
 
     @classmethod
@@ -250,7 +253,7 @@ class PingPY(Window):
         self.player.set_position(self.player_default_pos)
         self.ball.set_position(self.ball_default_pos)
         self.ball.set_angle(90)
-        self.goto("throwing")
+        self.goto("THROWING")
 
 
     def new_level(self):
@@ -260,16 +263,17 @@ class PingPY(Window):
         self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game_start"])
-        self.goto("throwing")
+        self.goto("THROWING")
 
 
-    def end_level(self):
+    def end_level(self, timer_id = None, time = None):
         "Stops current level"
+        if timer_id: timer.kill_timer(timer_id)
         self.grid.clear()
         self.space.remove(self.player.body, self.player.shape)
         self.space.remove(self.ball.body, self.ball.shape)
         pygame.mixer.music.unpause()
-        self.goto("menu")
+        self.goto("MENU")
 
 
     def process_collision(self, arbiter: pymunk.arbiter.Arbiter, space: pymunk.Space, data):
@@ -372,12 +376,12 @@ class PingPY(Window):
 
         if pressed_keys[pygame.K_ESCAPE]:
             if self.state in [THROWING_STATE, PLAYING_STATE]: self.end_level()
-            elif self.state in [SHOP_STATE, PREPARATION_STATE]: self.goto("menu")
+            elif self.state in [SHOP_STATE, PREPARATION_STATE]: self.goto("MENU")
 
 
     def process_player_events(self):
         "Processes player events. Such as winning, losing, and taking damage."
-        if self.state in [THROWING_STATE, PLAYING_STATE]:
+        if self.state == PLAYING_STATE:
             #Decrease player's health by 1
             if self.ball.body.position[1] > self.size[1]:
                 self.reset_player(PLAYER_DEFAULT_DAMAGE)
@@ -385,15 +389,15 @@ class PingPY(Window):
             #Game over when the player's health == 0
             if not self.player.health:
                 self.score += (500 * (self.grid_size + 1) + self.player.health * 25)
-                set_timer(2000, lambda id, time: self.end_level())
+                timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player_die"])
-                self.goto("died")
+                self.goto("DIED")
 
             #Game win when ball breaks all grid bodies
             if not len(self.grid.shapes):
-                set_timer(2000, lambda id, time: self.end_level())
+                timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player_win"])
-                self.goto("winned")
+                self.goto("WINNED")
 
 
     def process_render(self):
