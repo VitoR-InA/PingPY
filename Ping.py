@@ -38,7 +38,7 @@ class PingPY(Window):
         #Defining window vars
         self.clock = pygame.time.Clock()
 
-        size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
+        self.size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
 
         multiples = self.get_multiples(self.size, 8, 20)
         self.sizes = (min(multiples), multiples[len(multiples) // 2], max(multiples))
@@ -109,8 +109,8 @@ class PingPY(Window):
 
         "====----       GUI        ----===="
         #Means default gui element size
-        gui_size = (280 / size_factor, 80 / size_factor)
-        spacing = 5 / size_factor
+        gui_size = (280 / self.size_factor, 80 / self.size_factor)
+        spacing = 5 / self.size_factor
         temp_rect = Rect()
 
         "====----    Main menu     ----===="
@@ -220,10 +220,10 @@ class PingPY(Window):
 
         "====----      Fonts       ----===="
         #Defining debug font
-        self.debug_font = pygame.sysfont.SysFont("NotoSans", 20 // int(size_factor))
+        self.debug_font = pygame.sysfont.SysFont("NotoSans", round(20 / self.size_factor))
 
         #Defining header font
-        self.header_font = pygame.sysfont.SysFont("NotoSans", 170 // int(size_factor))
+        self.header_font = pygame.sysfont.SysFont("NotoSans", round(170 / self.size_factor))
 
 
     @classmethod
@@ -244,10 +244,10 @@ class PingPY(Window):
 
     def goto(self, state: str):
         self.state = list(STATES.values()).index(f"{state.upper()}_STATE")
-        for container in [attr for attr in dir(self) if attr.endswith("_container")]:
-            if container.startswith(state.lower()):
-                getattr(self, container).show()
-            else: getattr(self, container).hide()
+        for container_name in [attr for attr in dir(self) if attr.endswith("_container")]:
+            container: UIContainer = getattr(self, container_name)
+            if container_name.startswith(state.lower()): container.show()
+            else: container.hide()
 
 
     def reset_player(self, damage: int):
@@ -261,8 +261,8 @@ class PingPY(Window):
 
     def new_level(self):
         "Starts new level"
-        self.player = Player(Rect(self.player_pos, self.player_size), self.player_health, self.player_speed, self.space)
-        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius, self.space)
+        self.player = Player(Rect(self.player_pos, [point / self.size_factor for point in self.player_size]), self.player_health, self.player_speed, self.space)
+        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius / self.size_factor, self.space)
         self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game_start"])
@@ -461,8 +461,8 @@ class PingPY(Window):
 
             "====----  Draw  ----===="
             self.screen.fill("#070707")
-            self.ui_manager.draw_ui(self.screen)
             self.process_render()
+            self.ui_manager.draw_ui(self.screen)
             self.process_render_debug()
 
             #Displaying on window
