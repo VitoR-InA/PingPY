@@ -28,12 +28,13 @@ import timer
 
 class PingPY(Window):
     def __init__(self):
-        "====----       Init       ----===="
+        "====----   Pygame init    ----===="
         #Pygame init
         pygame.init()
         pygame.mixer.init()
 
         super().__init__("PingPY", fullscreen_desktop = True)
+        self.workpath = self.get_workpath()
 
         #Defining window vars
         self.clock = pygame.time.Clock()
@@ -60,7 +61,7 @@ class PingPY(Window):
         self.sounds = {}
 
         #Ball sounds
-        self.sounds["jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump.wav")
+        self.sounds["jump1"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump1.wav")
         self.sounds["jump2"] = pygame.mixer.Sound("_internal\\sounds\\ball\\jump2.wav")
 
         #Player sounds
@@ -72,7 +73,7 @@ class PingPY(Window):
         self.sounds["game_start"] = pygame.mixer.Sound("_internal\\sounds\\game\\start.wav")
 
         #Game music
-        pygame.mixer.music.load("_internal\\Sounds\\music.wav")
+        pygame.mixer.music.load("_internal\\sounds\\music.wav")
 
 
         "====----   Pymunk init    ----===="
