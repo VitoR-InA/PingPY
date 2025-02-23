@@ -33,12 +33,12 @@ class PingPY(Window):
         pygame.init()
         pygame.mixer.init()
 
-        super().__init__("PingPY", fullscreen_desktop = True)
+        super().__init__("PingPY", (800, 600))
 
         #Defining window vars
         self.clock = pygame.time.Clock()
 
-        self.size_factor = (1920 / self.size[0] / 2) + (1080 / self.size[1] / 2)
+        self.size_factor = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2)
 
         multiples = self.get_multiples(self.size, 8, 20)
         self.sizes = (min(multiples), multiples[len(multiples) // 2], max(multiples))
@@ -93,14 +93,14 @@ class PingPY(Window):
         #Defining ball vars
         self.ball_color = BALL_DEFAULT_COLOR
         self.ball_radius = BALL_DEFAULT_RADIUS
-        self.ball_pos = (self.size[0] / 2, self.size[1] - 100)
+        self.ball_pos = (self.size[0] / 2, self.size[1] - 100 * self.size_factor)
 
         #Defining player vars
         self.player_health = PLAYER_DEFAULT_HEALTH
         self.player_score = PLAYER_DEFAULT_SCORE
         self.player_size = PLAYER_DEFAULT_SIZE
         self.player_speed = PLAYER_DEFAULT_SPEED
-        self.player_pos = (self.size[0] / 2, self.size[1] - 50)
+        self.player_pos = (self.size[0] / 2, self.size[1] - 50 * self.size_factor)
 
         #Defining walls
         HollowBox(Rect(-WALL_DEFAULT_WIDTH - 1, -WALL_DEFAULT_WIDTH - 1, self.size[0] + WALL_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
@@ -109,8 +109,8 @@ class PingPY(Window):
 
         "====----       GUI        ----===="
         #Means default gui element size
-        gui_size = (280 / self.size_factor, 80 / self.size_factor)
-        spacing = 5 / self.size_factor
+        gui_size = (280 * self.size_factor, 80 * self.size_factor)
+        spacing = 5 * self.size_factor
         temp_rect = Rect()
 
         "====----    Main menu     ----===="
@@ -220,10 +220,10 @@ class PingPY(Window):
 
         "====----      Fonts       ----===="
         #Defining debug font
-        self.debug_font = pygame.sysfont.SysFont("NotoSans", round(20 / self.size_factor))
+        self.debug_font = pygame.sysfont.SysFont("NotoSans", round(20 * self.size_factor))
 
         #Defining header font
-        self.header_font = pygame.sysfont.SysFont("NotoSans", round(170 / self.size_factor))
+        self.header_font = pygame.sysfont.SysFont("NotoSans", round(170 * self.size_factor))
 
 
     @classmethod
@@ -261,8 +261,8 @@ class PingPY(Window):
 
     def new_level(self):
         "Starts new level"
-        self.player = Player(Rect(self.player_pos, [point / self.size_factor for point in self.player_size]), self.player_health, self.player_speed, self.space)
-        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius / self.size_factor, self.space)
+        self.player = Player(Rect(self.player_pos, [point * self.size_factor for point in self.player_size]), self.player_health, self.player_speed * self.size_factor, self.space)
+        self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius * self.size_factor, self.space)
         self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.space)
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game_start"])
@@ -384,7 +384,7 @@ class PingPY(Window):
 
     def process_player_events(self):
         "Processes player events. Such as winning, losing, and taking damage."
-        if self.state == PLAYING_STATE:
+        if self.state in [THROWING_STATE, PLAYING_STATE]:
             #Decrease player's health by 1
             if self.ball.body.position[1] > self.size[1]:
                 self.reset_player(PLAYER_DEFAULT_DAMAGE)
