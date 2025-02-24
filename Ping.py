@@ -421,8 +421,6 @@ class PingPY(Window):
 
 
     def process_render(self):
-        self.ui_manager.draw_ui(self.screen)
-
         if self.state == THROWING_STATE: self.ball_start_velocity = self.ball.draw_arrow(self.screen)
 
         if self.state == MENU_STATE: self.screen.blit(self.header_font.render(self.title, True, "#FFFFFF"), (10, 0))
@@ -449,6 +447,8 @@ class PingPY(Window):
             #Drawing game win text
             text = self.header_font.render("Game win!", True, "#FFFFFF")
             self.screen.blit(text, (self.size[0] / 2 - text.width / 2, self.size[1] / 2 - text.height / 2))
+
+        self.ui_manager.draw_ui(self.screen)
 
 
     def process_render_debug(self):
