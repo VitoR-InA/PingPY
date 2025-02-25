@@ -1,15 +1,17 @@
 #Game vars
-MENU_STATE = 0
+MAIN_STATE = 0
 SHOP_STATE = 1
 PREPARATION_STATE = 2
 THROWING_STATE = 3
 PLAYING_STATE = 4
-DIED_STATE = 5
-WINNED_STATE = 6
-
+END_STATE = 5
 STATES = {val: var for var, val in globals().items() if var.endswith("_STATE")}
 
 FPS_LOCK = 120
+
+#GUI
+GUI_SIZE = (280, 80)
+GUI_SPACING = 5
 
 #Colors
 WHITE = (255, 255, 255, 255)
