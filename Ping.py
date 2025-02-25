@@ -6,6 +6,8 @@ from _internal.game_modules.constants import *
 
 from _internal.game_modules.grid import Grid
 
+from _internal.game_modules.resource_manager import ResourceManager
+
 import os
 import sys
 
