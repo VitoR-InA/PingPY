@@ -4,7 +4,7 @@ import shutil
 from zipfile import ZipFile
 
 
-class ResourceLoader:
+class ResourceManager:
     "Simple tool to work with PingPY resources"
     @classmethod
     def load(self, file: os.PathLike):
