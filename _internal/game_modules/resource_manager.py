@@ -14,14 +14,14 @@ class ResourceLoader:
             if os.name == "nt": os.system(f"attrib +H {self.path}")
 
     @classmethod
-    def has(self, section: str, file: str) -> bool:
-        if os.path.exists(os.path.join(self.path, section, file)):
+    def has(self, path: os.PathLike) -> bool:
+        if os.path.exists(os.path.join(self.path, path)):
             return True
         else: return False
 
     @classmethod
-    def get(self, section: str, file: str) -> os.PathLike:
-        return os.path.join(self.path, section, file)
+    def get(self, path: os.PathLike) -> os.PathLike:
+        return os.path.join(self.path, path)
 
     @classmethod
     def close(self): shutil.rmtree(self.path)
