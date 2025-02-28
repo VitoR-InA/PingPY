@@ -278,7 +278,7 @@ class PingPY(Window):
         self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius * self.size_factor)
         self.space.add(self.ball, self.ball.shape)
 
-        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.grid_sizes[self.grid_current_size], self.grid_sizes[self.grid_current_size]))
+        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.grid_sizes[self.grid_current_size], ) * 2)
         self.space.add(*self.grid.bodies, *self.grid.shapes)
 
         pygame.mixer.music.pause()
