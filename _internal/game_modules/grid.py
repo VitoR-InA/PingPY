@@ -17,9 +17,8 @@ class Grid:
         """
         Creates grid made from pymunk bodies
 
-        Args:
-            count (pygame.typing.Point): Defines the number of bodies in length and width
-            space (pymunk.Space): Defines space where the Grid should be added
+        :param count: Defines the number of bodies in length and width
+        :param space: Defines space where the Grid should be added
         """
         self.rect = rect
 
@@ -56,9 +55,8 @@ class Grid:
         """
         Draws preview grid without space bodies
 
-        Args:
-            count (pygame.typing.Point): Defines the number of bodies in length and width
-            surface (pygame.Surface): _description_
+        :param count: Defines the number of bodies in length and width
+        :param surface: Defines a surface where the grid will be drawed
         """
         self.rect = rect
 
@@ -75,6 +73,12 @@ class Grid:
 
             pygame.draw.rect(surface, "#FFFFFF", ((new_x - cell_width / 2, new_y - cell_height / 2),
                                                   (cell_width, cell_height)), 1)
+
+    @classmethod
+    def get_valid_sizes(self, size: pygame.typing.Point,
+                        start: int, stop: int):
+        dividebles = [i for i in range(start, stop) if (size[0] * 10) % i == 0 and (size[1] // 2 * 10) % i == 0]
+        return [min(dividebles), dividebles[len(dividebles) // 2], max(dividebles)]
 
     def draw(self, surface: pygame.Surface):
         for num, body in enumerate(self.bodies):

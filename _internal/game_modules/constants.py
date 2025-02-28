@@ -20,9 +20,13 @@ RED = (255, 0, 0, 255)
 GREEN = (0, 255, 0, 255)
 BLUE = (0, 0, 255, 255)
 
-#Ball value
+#Ball values
 BALL_DEFAULT_COLOR = RED
 BALL_DEFAULT_RADIUS = 10
+
+#Grid values
+GRID_DEFAULT_START = 8
+GRID_DEFAULT_STOP = 20
 
 #Player values
 PLAYER_DEFAULT_DAMAGE = 1
