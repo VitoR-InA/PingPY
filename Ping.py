@@ -42,9 +42,6 @@ class PingPY(Window):
 
         self.size_factor = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2)
 
-        multiples = self.get_multiples(self.size, 8, 20)
-        self.sizes = (min(multiples), multiples[len(multiples) // 2], max(multiples))
-
         "====----    Pygame surfaces    ----===="
         # Main window surface
         self.screen = self.get_surface()
@@ -92,6 +89,10 @@ class PingPY(Window):
         self.ball_color = BALL_DEFAULT_COLOR
         self.ball_radius = BALL_DEFAULT_RADIUS
         self.ball_pos = (self.size[0] / 2, self.size[1] - 100 * self.size_factor)
+
+        # Defining grid vars
+        self.grid_sizes = Grid.get_valid_sizes(self.size, GRID_DEFAULT_START, GRID_DEFAULT_STOP + 1)
+        self.grid_current_size = 1
 
         # Defining player vars
         self.player_health = PLAYER_DEFAULT_HEALTH
@@ -164,7 +165,6 @@ class PingPY(Window):
         # Defining grid size slider label
         UILabel(temp_rect, "Size", self.ui_manager, self.preparation_container,
                 anchors = {"left":"left", "bottom":"bottom"}).change_layer(3)
-        self.grid_size = 1
 
         # Defining start button
         temp_rect.bottomright = (-gui_spacing, -gui_spacing)
@@ -238,15 +238,6 @@ class PingPY(Window):
         self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager, visible = False)
 
     @classmethod
-    def get_multiples(self, size, start, stop):
-        "Returns multiples of a given size"
-        result = []
-        for i in range(start, stop + 1):
-            if (size[0] * 10) % i == 0 and (size[1] // 2 * 10) % i == 0:
-                result.append(i)
-        return result
-
-    @classmethod
     def get_workpath(self):
         if hasattr(sys, "frozen"): return sys._MEIPASS
         else: return os.path.join(os.path.abspath(__file__), "_internal")
@@ -287,7 +278,7 @@ class PingPY(Window):
         self.ball = Ball(self.ball_color, self.ball_pos, self.ball_radius * self.size_factor)
         self.space.add(self.ball, self.ball.shape)
 
-        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.sizes[self.grid_size], self.sizes[self.grid_size]))
+        self.grid = Grid(Rect((0, 0), (self.size[0], self.size[1] / 2)), (self.grid_sizes[self.grid_current_size], self.grid_sizes[self.grid_current_size]))
         self.space.add(*self.grid.bodies, *self.grid.shapes)
 
         pygame.mixer.music.pause()
@@ -397,7 +388,7 @@ class PingPY(Window):
                     self.master.set_volume(event.value / 100)
 
                 if event.ui_element == self.size_sldr:
-                    self.grid_size = event.value
+                    self.grid_current_size = event.value
 
     def process_player_events(self):
         "Processes player events. Such as winning, losing, and taking damage."
@@ -416,7 +407,7 @@ class PingPY(Window):
 
             # Game win when ball breaks all grid bodies
             if not len(self.grid.shapes):
-                self.player_score += (500 * (self.grid_size + 1) + self.player.health * 25)
+                self.player_score += (500 * (self.grid_current_size + 1) + self.player.health * 25)
                 self.end_label.set_text("You win!")
                 self.end_label.show()
                 timer.set_timer(2000, self.end_level)
@@ -429,7 +420,7 @@ class PingPY(Window):
             self.player_health_lbl.set_text(f"Health: {self.player_health}")
 
         elif self.state == PREPARATION_STATE: Grid.draw_preview(Rect((0, 0), (self.size[0], self.size[1] / 2)),
-                                                                (self.sizes[self.grid_size], self.sizes[self.grid_size]), self.screen)
+                                                                (self.grid_sizes[self.grid_current_size], self.grid_sizes[self.grid_current_size]), self.screen)
 
         elif self.state in [THROWING_STATE, PLAYING_STATE]:
             if self.state == THROWING_STATE:
