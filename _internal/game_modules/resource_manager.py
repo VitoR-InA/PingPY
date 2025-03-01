@@ -22,6 +22,7 @@ class ResourceManager:
 
         self.config_obj.write() # Saves config changes
 
+
     def load(self, file: os.PathLike):
         "Extracts all resource data in the same dir with same name, made for compat with pygame_gui"
         with ZipFile(file) as zip:
@@ -31,15 +32,19 @@ class ResourceManager:
 
             if os.name == "nt": os.system(f"attrib +H {self.loaded_resource}") # Hides extracted folder for windows systems
 
+
     def has(self, path: os.PathLike) -> bool:
         if os.path.exists(os.path.join(self.loaded_resource, path)):
             return True
         else: return False
 
+
     def get(self, path: os.PathLike) -> os.PathLike:
         return os.path.join(self.loaded_resource, path)
 
+
     def read(self, path: os.PathLike) -> bytes:
         return open(os.path.join(self.loaded_resource, path), "rb")
+
 
     def close(self): shutil.rmtree(self.loaded_resource)
