@@ -1,12 +1,4 @@
-# Game vars
-MAIN_STATE = 0
-SHOP_STATE = 1
-PREPARATION_STATE = 2
-THROWING_STATE = 3
-PLAYING_STATE = 4
-END_STATE = 5
-STATES = {val: var for var, val in globals().items() if var.endswith("_STATE")}
-
+# Game fps lock
 FPS_LOCK = 120
 
 # Game resources
@@ -40,3 +32,12 @@ PLAYER_DEFAULT_SPEED = 500
 
 # Wall values
 WALL_DEFAULT_WIDTH = 10
+
+# Game states #READONLY | DON'T EDIT
+MAIN_STATE = 0
+SHOP_STATE = 1
+PREPARATION_STATE = 2
+THROWING_STATE = 3
+PLAYING_STATE = 4
+END_STATE = 5
+STATES = {val: var for var, val in globals().items() if var.endswith("_STATE")}
