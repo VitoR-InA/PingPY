@@ -34,9 +34,10 @@ class ResourceManager:
 
 
     def has(self, path: os.PathLike) -> bool:
-        if os.path.exists(os.path.join(self.loaded_resource, path)):
+        try:
+            os.path.exists(os.path.join(self.loaded_resource, path))
             return True
-        else: return False
+        except KeyError: return False
 
 
     def get(self, path: os.PathLike) -> os.PathLike:
