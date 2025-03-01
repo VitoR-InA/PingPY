@@ -1,7 +1,6 @@
 from configobj import ConfigObj
 
 import os
-import shutil
 
 from zipfile import ZipFile
 
