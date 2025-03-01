@@ -16,17 +16,15 @@ class ResourceManager:
         self.config_obj.write()
 
     def load(self, file: os.PathLike):
-        with ZipFile(file) as zip:
-            self.resource = os.path.join(self.resources_path, f".{os.path.splitext(os.path.basename(zip.filename))[0]}")
-            zip.extractall(self.resource)
-            if os.name == "nt": os.system(f"attrib +H {self.resource}")
+        self._zip = ZipFile(file)
 
     def has(self, path: os.PathLike) -> bool:
-        if os.path.exists(os.path.join(self.resource, path)):
+        try:
+            self._zip.getinfo(path)
             return True
-        else: return False
+        except KeyError: return False
 
-    def get(self, path: os.PathLike) -> os.PathLike:
-        return os.path.join(self.resource, path)
+    def get(self, path: os.PathLike) -> bytes:
+        return self._zip.read(path)
 
-    def close(self): shutil.rmtree(self.resource)
+    def close(self): self._zip.close()
