@@ -22,10 +22,9 @@ class ResourceManager:
 
         self.config_obj.write() # Saves config changes
 
+        # Loads selected resource
+        with ZipFile(os.path.join(self.resources_path, self.config_obj["chosen_resource"])) as zip:
 
-    def load(self, file: os.PathLike):
-        "Extracts all resource data in the same dir with same name, made for compat with pygame_gui"
-        with ZipFile(file) as zip:
             self.loaded_resource = os.path.join(self.resources_path, f".{os.path.splitext(os.path.basename(zip.filename))[0]}")
 
             zip.extractall(self.loaded_resource) # Extracts all loaded_resource file data
@@ -34,10 +33,9 @@ class ResourceManager:
 
 
     def has(self, path: os.PathLike) -> bool:
-        try:
-            os.path.exists(os.path.join(self.loaded_resource, path))
+        if os.path.exists(os.path.join(self.loaded_resource, path)):
             return True
-        except KeyError: return False
+        else: return False
 
 
     def get(self, path: os.PathLike) -> os.PathLike:
@@ -48,4 +46,5 @@ class ResourceManager:
         return open(os.path.join(self.loaded_resource, path), "rb")
 
 
-    def close(self): shutil.rmtree(self.loaded_resource)
+    def close(self):
+        if os.path.exists(self.loaded_resource): shutil.rmtree(self.loaded_resource)

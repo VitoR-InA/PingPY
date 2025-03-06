@@ -12,7 +12,7 @@ import typing
 
 class Grid:
     def __init__(self,
-                 rect: Rect,
+                 rect: pygame.typing.RectLike,
                  count: pygame.typing.Point):
         """
         Creates grid made from pymunk bodies
@@ -49,9 +49,10 @@ class Grid:
 
     @classmethod
     def draw_preview(self,
-                     rect: Rect,
-                     count: pygame.typing.Point,
-                     surface: pygame.Surface):
+                     surface: pygame.Surface,
+                     color: pygame.typing.ColorLike,
+                     rect: pygame.typing.RectLike,
+                     count: pygame.typing.Point):
         """
         Draws preview grid without space bodies
 
@@ -71,11 +72,12 @@ class Grid:
             new_x = offset_x + x * cell_width
             new_y = offset_y + y * cell_height
 
-            pygame.draw.rect(surface, "#FFFFFF", ((new_x - cell_width / 2, new_y - cell_height / 2),
+            pygame.draw.rect(surface, color, ((new_x - cell_width / 2, new_y - cell_height / 2),
                                                   (cell_width, cell_height)), 1)
 
     @classmethod
-    def get_valid_sizes(self, size: pygame.typing.Point,
+    def get_valid_sizes(self,
+                        size: pygame.typing.Point,
                         start: int, stop: int):
         dividebles = [i for i in range(start, stop) if (size[0] * 10) % i == 0 and (size[1] // 2 * 10) % i == 0]
         return [min(dividebles), dividebles[len(dividebles) // 2], max(dividebles)]
