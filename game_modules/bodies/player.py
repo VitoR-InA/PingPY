@@ -1,3 +1,5 @@
+from game_modules.constants import *
+
 import pygame
 from pygame import Rect
 
@@ -5,18 +7,19 @@ import pymunk
 
 
 class Player(pymunk.Body):
-    def __init__(self,
-                 rect: Rect,
-                 health: int):
+    max_health = PLAYER_DEFAULT_HEALTH
+    speed = PLAYER_DEFAULT_SPEED
+
+    def __init__(self, rect: pygame.typing.RectLike):
         # Player rect
         self.rect = rect
 
         # Player health
-        self.health = health
+        self.health = self.max_health
 
         self.colors = []
         for heart in range(1, self.health + 1):
-            factor = heart / health
+            factor = heart / self.max_health
             self.colors.append((int(255 * factor), int(255 * (1 - factor)), 0, 255))
         self.colors.append((7, 7, 7, 255))
         self.colors.reverse()
@@ -31,10 +34,10 @@ class Player(pymunk.Body):
         self.shape.friction = 0
 
     def draw(self, surface):
-        # Draw player
+        # Draws player
         self.rect.center = self.position
         self.shape.color = self.colors[self.health]
-        pygame.draw.rect(surface, self.shape.color, Rect((self.position[0] - self.rect.size[0] / 2, self.position[1] - self.rect.size[1] / 2), self.rect.size))
+        pygame.draw.rect(surface, self.shape.color, self.rect)
 
     def set_position(self, position):
         self.position = position

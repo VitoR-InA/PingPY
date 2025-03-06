@@ -1,3 +1,5 @@
+from game_modules.constants import *
+
 from math import cos, sin, radians
 
 import pygame
@@ -42,7 +44,7 @@ class Ball(pymunk.Body):
         pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (left_end_x, left_end_y), round(3 * size_factor))
         pygame.draw.line(surface, "#FFFFFF", (end_x, end_y), (right_end_x, right_end_y), round(3 * size_factor))
 
-        return (end_x - self.position[0], end_y - self.position[1])
+        self.velocity = tuple(map(lambda point: point * BALL_DEFAULT_SPEED_MULTIPLIER, (end_x - self.position[0], end_y - self.position[1])))
 
     def set_angle(self, value: int = 90):
         self.arrow_angle = value
