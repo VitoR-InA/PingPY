@@ -26,22 +26,22 @@ You can see resource directory example below.
     └── breeze_ligth.json
 ```
 
+How it works
+------------
+- **sounds**
+    - **ball** - This is where the jump sounds are stored. When bouncing off a block, the game selects a random sound from this directory. There can be an infinite number of them.
+    - **game** - Two sounds are reserved. Game music (music.wav) and game start (start.wav). Other names will not be detected.
+    - **player** - Three sounds are reserved. Player takes damage (damage.wav), player die (die.wav) and player win (win.wav). Other names will not be detected.
+- **textures** (Used only in pygame_gui)
+    - It's recommended to use this directory to store element textures for solid structure. pygame_gui supports any directory in the theme file, but in the future all game textures will be stored here.
+    - see [pygame_gui element images theming](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element)
+- **themes**
+    In future PingPY will have an option to store many theme files. For now it can only detect theme named ui_theme.json
+
+
 Theme Guide
 ===========
 
-In PingPY theme files are used for the game as well. So defaults.dark_bg is responsible for the background color of the game in all states.
+In PingPY theme files are used for the game as well.
 
-```json
-{
-    "defaults":
-    {
-        "colours":
-        {
-            "dark_bg":"#1b1e20"
-        }
-    }
-}
-```
-The code above will change game background to "1b1e20". Game theming also supports [supported colour inputs](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#id3).
-
-> see [pygame_gui theming](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element) for more info about theming any other element
+> see [pygame_gui theme options per element](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element) for more info about theming any other element
