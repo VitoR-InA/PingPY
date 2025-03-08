@@ -13,7 +13,7 @@ There are 4 containers in the game:
 - The second in ID is the class_id of the element if there are multiple and / or the object_id of the element.
 - And the last thing in ID is the *optional* subelement object_id.
 
-> [pygame_gui object IDs - in depth](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#object-ids-in-depth)
+Besides this pygame_gui also has global element ids for every element. It has no prefix and you can also use this for theming. E.g. "button", "panel", "label" ([pygame_gui object IDs - in depth](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#object-ids-in-depth)).
 
 Structure:
 ```
@@ -24,7 +24,7 @@ container |          |
           |          |
       element id     |
                      |
-                subelement
+                subelement id
 ```
 
 > Note: "game" is global element container, for now only two elements using it - background panel (game.@background_panel) and back button (game.@back_button). **"game" element container only uses in case when there is an element, which contains in the most of containers**
