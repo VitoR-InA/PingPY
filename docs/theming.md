@@ -11,7 +11,7 @@ There are 4 containers in the game:
     - self.shop_container - player upgrades menu
     - self.end_container - "Game over" label container
 - The second in ID is the class_id of the element if there are multiple and / or the object_id of the element.
-- And the last thing in ID is the subelement.  
+- And the last thing in ID is the *optional* subelement.
 
 Structure:
 ```
