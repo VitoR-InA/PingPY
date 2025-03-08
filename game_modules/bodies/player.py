@@ -10,19 +10,15 @@ class Player(pymunk.Body):
     max_health = PLAYER_DEFAULT_HEALTH
     speed = PLAYER_DEFAULT_SPEED
 
-    def __init__(self, rect: pygame.typing.RectLike):
-        # Player rect
-        self.rect = rect
+    def __init__(self, rect: Rect):
+        self.rect = rect # Player rect
 
-        # Player health
-        self.health = self.max_health
+        self.health = self.max_health # Player health
 
-        self.colors = []
-        for heart in range(1, self.health + 1):
-            factor = heart / self.max_health
-            self.colors.append((int(255 * factor), int(255 * (1 - factor)), 0, 255))
-        self.colors.append((7, 7, 7, 255))
-        self.colors.reverse()
+        self.colors = [(0, 0, 0, 255)] + [
+            (int(255 * (heart / self.max_health)), int(255 * (1 - heart / self.max_health)), 0, 255)
+            for heart in range(self.health, 0, -1)
+        ]
 
         # Player body
         super().__init__(body_type = pymunk.Body.KINEMATIC)
@@ -34,13 +30,15 @@ class Player(pymunk.Body):
         self.shape.friction = 0
 
     def draw(self, surface):
-        # Draws player
+        "Draws player, updates player rect"
         self.rect.center = self.position
         self.shape.color = self.colors[self.health]
         pygame.draw.rect(surface, self.shape.color, self.rect)
 
-    def set_position(self, position):
-        self.position = position
+    def set_position(self, position: pygame.typing.Point): self.position = position
 
-    def take_damage(self, damage: int):
-        self.health -= damage
+    def set_size(self, size: pygame.typing.Point):
+        self.rect.size = size
+        self.shape.area = size
+
+    def take_damage(self, damage: int): self.health -= damage
