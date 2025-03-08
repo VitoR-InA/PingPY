@@ -12,15 +12,14 @@ class Ball(pymunk.Body):
                  color: pygame.Color,
                  center: pygame.typing.Point,
                  radius: float):
-        #Ball angle
-        self.arrow_angle = 90
+        self.arrow_angle = 90 # Ball angle
 
-        #Ball body
+        # Ball body
         moment = pymunk.moment_for_circle(10, radius, 0)
         super().__init__(10, moment)
         self.position = center
 
-        #Ball shape
+        # Ball shape
         self.shape = pymunk.Circle(self, radius)
         self.shape.collision_type = 1
         self.shape.elasticity = 1.005
@@ -46,11 +45,9 @@ class Ball(pymunk.Body):
 
         self.velocity = tuple(map(lambda point: point * BALL_DEFAULT_SPEED_MULTIPLIER, (end_x - self.position[0], end_y - self.position[1])))
 
-    def set_angle(self, value: int = 90):
-        self.arrow_angle = value
+    def set_angle(self, value: int = 90): self.arrow_angle = value
 
-    def set_position(self, position):
-        self.position = position
+    def set_position(self, position): self.position = position
         
     def draw(self, surface):
         pygame.draw.circle(surface, self.shape.color, self.position, self.shape.radius)
