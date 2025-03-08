@@ -34,14 +34,7 @@ How it works
     - **player** - Three sounds are reserved. Player takes damage (damage.wav), player die (die.wav) and player win (win.wav). Other names will not be detected.
 - **textures** (Used only in pygame_gui)
     - It's recommended to use this directory to store element textures for solid structure. pygame_gui supports any directory in the theme file, but in the future all game textures will be stored here.
-    - see [pygame_gui element images theming](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element)
+    - see [pygame_gui element images theming](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element).
 - **themes**
-    In future PingPY will have an option to store many theme files. For now it can only detect theme named ui_theme.json
-
-
-Theme Guide
-===========
-
-In PingPY theme files are used for the game as well.
-
-> see [pygame_gui theme options per element](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element) for more info about theming any other element
+    - In future PingPY will have an option to store many theme files. For now it can only detect theme named ui_theme.json
+    - see [theming docs](https://github.com/VitoR-InA/PingPY/tree/main/docs/theming.md) for more info.
