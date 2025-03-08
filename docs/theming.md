@@ -11,7 +11,9 @@ There are 4 containers in the game:
     - self.shop_container - player upgrades menu
     - self.end_container - "Game over" label container
 - The second in ID is the class_id of the element if there are multiple and / or the object_id of the element.
-- And the last thing in ID is the *optional* subelement.
+- And the last thing in ID is the *optional* subelement object_id.
+
+> [pygame_gui object IDs - in depth](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#object-ids-in-depth)
 
 Structure:
 ```
@@ -25,7 +27,7 @@ container |          |
                 subelement
 ```
 
-> Note: "game" is global element container, for now only two elements using it - background panel (game.@background_panel) and back button (game.@back_button)
+> Note: "game" is global element container, for now only two elements using it - background panel (game.@background_panel) and back button (game.@back_button). **"game" element container only uses in case when there is an element, which contains in the most of containers**
 
 Game elements
 -------------
