@@ -95,9 +95,10 @@ class PingPY(Window):
         self.player_score = PLAYER_DEFAULT_SCORE
 
         # Defines hollow box
-        HollowBox(Rect(-WALL_DEFAULT_WIDTH - 1, -WALL_DEFAULT_WIDTH - 1,
-                       self.size[0] + WALL_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
-                  WALL_DEFAULT_WIDTH, self.space)
+        hollow_box = HollowBox(Rect(-WALL_DEFAULT_WIDTH - 1, -WALL_DEFAULT_WIDTH - 1,
+                                    self.size[0] + WALL_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
+                               WALL_DEFAULT_WIDTH)
+        self.space.add(hollow_box, *hollow_box.segments)
 
         "====----          GUI          ----===="
         # Defines gui layout
@@ -428,8 +429,8 @@ class PingPY(Window):
         "Renders all values for debugging"
         if self.debug:
             if self.state in [THROWING_STATE, PLAYING_STATE]: self.space.debug_draw(self.options)
-            debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {STATES[self.state]} ({self.state})"]
-            self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
+            # debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {STATES[self.state]} ({self.state})"]
+            # self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
 
     def run(self):
         "Runs main cycle"
@@ -452,7 +453,7 @@ class PingPY(Window):
 
             "====----  Draw  ----===="
             self.process_render()
-            # self.process_render_debug()
+            self.process_render_debug()
 
             self.flip() # Displaying on window
         pygame.mixer.music.unload()
