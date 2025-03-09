@@ -1,12 +1,12 @@
 from game_modules.bodies import Ball
+from game_modules.bodies import Grid
 from game_modules.bodies import HollowBox
 from game_modules.bodies import Player
 
 from game_modules.constants import *
 
-from game_modules.grid import Grid
-
-from game_modules.resource_manager import ResourceManager
+from game_modules.utils import JsonConfig
+from game_modules.utils import ResourceManager
 
 import os
 import sys
@@ -31,19 +31,31 @@ import timer
 
 class PingPY(Window):
     def __init__(self):
-        "====----      Pygame init      ----===="
+        "====----    Initialization     ----===="
         # Inits pygame module
         pygame.init()
         pygame.mixer.init()
 
         self.clock = pygame.time.Clock() # Defines pygame clock object
 
-        super().__init__("PingPY", fullscreen_desktop = True) # Creates window
+        self.json_config = JsonConfig("properties.json")
 
-        self.SIZE_FACTOR = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2)
-
-        "====----   Resource manager    ----===="
+        # Inits resource manager
+        if not self.json_config.has(key = "chosen_resource"): self.json_config.set(key_value = (("chosen_resource", "default.zip"), ))
         self.resource_manager = ResourceManager(os.path.join(self.get_execpath(), "resources"))
+        self.resource_manager.load(self.json_config.get(key = "chosen_resource"))
+
+        # Defines window measures
+        info = pygame.display.Info()
+        if not self.json_config.has("window"): self.json_config.set("window", (("fullscreen", True),
+                                                                               ("resolution", "x".join(map(str, [info.current_w, info.current_h])))))
+
+        # Creates window
+        super().__init__("PingPY",
+                         size = list(map(int, self.json_config.get("window", "resolution").split("x"))),
+                         fullscreen = self.json_config.get("window", "fullscreen"))
+
+        self.SIZE_FACTOR = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2) # Defines coefficient between current monitor size and 1920x1080
 
         "====----    Pygame surfaces    ----===="
         self.screen = self.get_surface() # Defines window surface
@@ -102,8 +114,8 @@ class PingPY(Window):
 
         "====----          GUI          ----===="
         # Defines gui layout
-        gui_size = (GAME_GUI_DEFAULT_SIZE[0] * self.SIZE_FACTOR, GAME_GUI_DEFAULT_SIZE[1] * self.SIZE_FACTOR)
-        gui_spacing = GAME_GUI_DEFAULT_SPACING * self.SIZE_FACTOR
+        gui_size = tuple(map(lambda point: point * self.SIZE_FACTOR, GAME_DEFAULT_GUI_SIZE))
+        gui_spacing = GAME_DEFAULT_GUI_SPACING * self.SIZE_FACTOR
         temp_rect = Rect()
 
         "====----    Main container     ----===="
