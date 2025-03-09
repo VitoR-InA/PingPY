@@ -81,6 +81,10 @@ Game elements
     - **back button**  
     class_id = "game.@back_button"  
     object_id = "shop.#back_button"
+- **End container**
+    - **background panel**  
+    class_id = "game.@background_panel"  
+    object_id = "end.#background_panel"
 
 
 > see [pygame_gui theme options per element](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element) for more info about theming any other element
