@@ -21,9 +21,7 @@ You can see resource directory example below.
 ├── textures/
 │   ├── ball.png
 │   └── player.png
-└── themes/
-    ├── breeze_dark.json
-    └── breeze_ligth.json
+└── ui_theme.json
 ```
 
 How it works
@@ -35,6 +33,6 @@ How it works
 - **textures** (Used only in pygame_gui)
     - It's recommended to use this directory to store element textures for solid structure. pygame_gui supports any directory in the theme file, but in the future all game textures will be stored here.
     - see [pygame_gui element images theming](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element).
-- **themes**
-    - In future PingPY will have an option to store many theme files. For now it can only detect theme named ui_theme.json
+- **theme**
+    - Only one name is reserved - ui_theme.json. Other names will not be detected.
     - see [theming docs](https://github.com/VitoR-InA/PingPY/tree/main/docs/theming.md) for more info.
