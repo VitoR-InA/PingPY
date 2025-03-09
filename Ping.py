@@ -250,8 +250,8 @@ class PingPY(Window):
         UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.end_container,
                 object_id = ObjectID(class_id = "game.@background_panel", object_id = "end.#background_panel")).change_layer(0)
 
-        self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager,
-                                 object_id = ObjectID(object_id = "end.#label"), visible = False)
+        self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager, self.end_container,
+                                 object_id = ObjectID(object_id = "end.#label"))
 
     @classmethod
     def get_execpath(self):
@@ -436,10 +436,11 @@ class PingPY(Window):
 
     def process_render_debug(self):
         "Renders all values for debugging"
+        self.debug_font = pygame.sysfont.SysFont("NotoSans", 20)
         if self.debug:
             if self.state in [THROWING_STATE, PLAYING_STATE]: self.space.debug_draw(self.options)
-            # debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {STATES[self.state]} ({self.state})"]
-            # self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
+            debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {STATES[self.state]} ({self.state})"]
+            self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
 
     def run(self):
         "Runs main cycle"
