@@ -81,10 +81,32 @@ Game elements
     - **back button**  
     class_id = "game.@back_button"  
     object_id = "shop.#back_button"
+    - **speed minus button**  
+    object_id = "shop.#minus_button"
+    - **speed panel**  
+    class_id = "shop.@panel.#label"  
+    object_id = "shop.#speed_panel.#label"
+    - **speed panel label**  
+    class_id = "shop.@panel.#label"  
+    object_id = "shop.#speed_panel.#label"
+    - **speed plus button**  
+    object_id = "shop.#plus_button"
+    - **health minus button**  
+    object_id = "shop.#minus_button"
+    - **health panel**  
+    class_id = "shop.@panel"  
+    object_id = "shop.#health_panel"
+    - **health panel label**  
+    class_id = "shop.@panel.#label"  
+    object_id = "shop.#health_panel.#label"
+    - **health plus button**  
+    object_id = "shop.#plus_button"
 - **End container**
     - **background panel**  
     class_id = "game.@background_panel"  
     object_id = "end.#background_panel"
+    - **end label**  
+    object_id = "end.#label"
 
 
 > see [pygame_gui theme options per element](https://pygame-gui.readthedocs.io/en/latest/theme_guide.html#theme-options-per-element) for more info about theming any other element
