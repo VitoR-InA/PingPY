@@ -207,16 +207,20 @@ class PingPY(Window):
         temp_rect.size = gui_size
         temp_rect.bottomright = (-gui_spacing, -gui_spacing)
         UIPanel(temp_rect, manager = self.ui_manager, container = self.shop_container,
+                object_id = ObjectID(class_id = "shop.@panel.#label", object_id = "shop.#speed_panel.#label"),
                 anchors = {"centerx":"centerx", "bottom":"bottom"})
         self.player_speed_lbl = UILabel(temp_rect, "Speed", self.ui_manager, self.shop_container,
+                                        object_id = ObjectID(class_id = "shop.@panel.#label", object_id = "shop.#speed_panel.#label"),
                                         anchors = {"centerx":"centerx", "bottom":"bottom"})
 
         # Defines player health upgrade
         temp_rect.size = gui_size
         temp_rect.bottomleft = (gui_size[0] + gui_spacing, -gui_spacing)
         UIPanel(temp_rect, manager = self.ui_manager, container = self.shop_container,
+                object_id = ObjectID(class_id = "shop.@panel", object_id = "shop.#health_panel"),
                 anchors = {"centerx":"centerx", "bottom":"bottom"})
         self.player_health_lbl = UILabel(temp_rect, "Health", self.ui_manager, self.shop_container,
+                                         object_id = ObjectID(class_id = "shop.@panel.#label", object_id = "shop.#health_panel.#label"),
                                          anchors = {"centerx":"centerx", "bottom":"bottom"})
 
         # RIGHT TARGET ISSUE: https://github.com/MyreMylar/pygame_gui/issues/671
@@ -244,7 +248,7 @@ class PingPY(Window):
         self.end_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines end container
 
         UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.end_container,
-                object_id = ObjectID(class_id = "@background_panel", object_id = "end.#background_panel")).change_layer(0)
+                object_id = ObjectID(class_id = "game.@background_panel", object_id = "end.#background_panel")).change_layer(0)
 
         self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager,
                                  object_id = ObjectID(object_id = "end.#label"), visible = False)
