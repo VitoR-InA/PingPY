@@ -109,9 +109,12 @@ class PingPY(Window):
         "====----    Main container     ----===="
         self.main_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager) # Defines menu container
 
+        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.main_container,
+                object_id = ObjectID(object_id = "main.#background_panel")).change_layer(0)
+
         # Defines game label
         UILabel(self.screen.get_rect(), self.title, self.ui_manager, self.main_container,
-                object_id = ObjectID(class_id = "main.@label", object_id = "main.#label")).change_layer(1)
+                object_id = ObjectID(object_id = "main.#label")).change_layer(1)
 
         # Defines volume slider
         temp_rect.size = gui_size
@@ -121,7 +124,7 @@ class PingPY(Window):
                                               anchors = {"left":"left", "bottom":"bottom"})
         # Defines volume slider label
         UILabel(temp_rect, "Volume", self.ui_manager, self.main_container,
-                object_id = ObjectID(class_id = "main.@label", object_id = "main.#volume_label"),
+                object_id = ObjectID(class_id = "main.@slider.#label", object_id = "main.#volume_slider.#label"),
                 anchors = {"left":"left", "bottom":"bottom"}).change_layer(3)
 
         # Defines play button
@@ -145,11 +148,14 @@ class PingPY(Window):
         "====---- Preparation container ----===="
         self.preparation_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines preparation container
 
+        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.preparation_container,
+                object_id = ObjectID(class_id = "game.@background_panel", object_id = "prep.#background_panel")).change_layer(0)
+
         # Defines preparation back button
         temp_rect.size = (gui_size[1], ) * 2
         temp_rect.bottomleft = (gui_spacing, -gui_spacing)
         UIButton(temp_rect, "Back", self.ui_manager, self.preparation_container, command = lambda: self.goto("MAIN"),
-                 object_id = ObjectID(class_id = "prep.@button", object_id = "prep.#back_button"),
+                 object_id = ObjectID(class_id = "game.@back_button", object_id = "prep.#back_button"),
                  anchors = {"left":"left", "bottom":"bottom"})
 
         # Defines grid size slider
@@ -161,7 +167,7 @@ class PingPY(Window):
 
         # Defines grid size slider label
         UILabel(temp_rect, "Size", self.ui_manager, self.preparation_container,
-                object_id = ObjectID(class_id = "prep.@label", object_id = "prep.#size_label"),
+                object_id = ObjectID(class_id = "prep.@slider.#label", object_id = "prep.#size_slider.#label"),
                 anchors = {"left":"left", "bottom":"bottom"}).change_layer(3)
 
         # Defines start button
@@ -173,15 +179,28 @@ class PingPY(Window):
         "====----    Shop container     ----===="
         self.shop_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines shop container
 
+        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.shop_container,
+                object_id = ObjectID(class_id = "game.@background_panel", object_id = "shop.#background_panel")).change_layer(0)
+
         # Defines shop label
         UILabel(self.screen.get_rect(), "Shop", self.ui_manager, self.shop_container,
-                object_id = ObjectID(class_id = "shop.@label", object_id = "shop.#label")).change_layer(1)
+                object_id = ObjectID(object_id = "shop.#label")).change_layer(1)
+
+        temp_rect.size = gui_size
+        temp_rect.topright = (-gui_spacing, gui_spacing)
+        UIPanel(temp_rect, manager = self.ui_manager, container = self.shop_container,
+                object_id = ObjectID(object_id = "shop.#score_panel"),
+                anchors = {"right":"right", "top":"top"})
+
+        self.player_score_lbl = UILabel(temp_rect, "Score", self.ui_manager, self.shop_container,
+                                        object_id = ObjectID(object_id = "shop.#score_panel.#label"),
+                                        anchors = {"right":"right", "top":"top"})
 
         # Defines shop back button
         temp_rect.size = (gui_size[1], ) * 2
         temp_rect.bottomleft = (gui_spacing, -gui_spacing)
         UIButton(temp_rect, "Back", self.ui_manager, self.shop_container, command = lambda: self.goto("MAIN"),
-                 object_id = ObjectID(class_id = "shop.@button", object_id = "shop.#back_button"),
+                 object_id = ObjectID(class_id = "game.@back_button", object_id = "shop.#back_button"),
                  anchors = {"left":"left", "bottom":"bottom"})
 
         # Defines player speed upgrade
@@ -205,36 +224,28 @@ class PingPY(Window):
 
         temp_rect.bottomright = (-gui_size[0] - gui_spacing, -gui_spacing)
         self.player_speed_minus = UIButton(temp_rect, "-", self.ui_manager, self.shop_container, "Speed -50\nScore +125\nMIN: 500",
-                                           object_id = ObjectID(class_id = "shop.@button", object_id = "shop.#minus_button"),
+                                           object_id = ObjectID(object_id = "shop.#minus_button"),
                                            anchors = {"left_target":self.player_speed_lbl, "bottom":"bottom"})
 
         self.player_health_minus = UIButton(temp_rect, "-", self.ui_manager, self.shop_container, "Health -1\nScore +250\nMIN: 3",
-                                            object_id = ObjectID(class_id = "shop.@button", object_id = "shop.#minus_button"),
+                                            object_id = ObjectID(object_id = "shop.#minus_button"),
                                             anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
 
         temp_rect.bottomleft = (gui_spacing, -gui_spacing)
         self.player_speed_plus = UIButton(temp_rect, "+", self.ui_manager, self.shop_container, "Speed +50\nScore -250\nMAX: 1000",
-                                          object_id = ObjectID(class_id = "shop.@button", object_id = "shop.#plus_button"),
+                                          object_id = ObjectID(object_id = "shop.#plus_button"),
                                           anchors = {"left_target":self.player_speed_lbl, "bottom":"bottom"})
 
         self.player_health_plus = UIButton(temp_rect, "+", self.ui_manager, self.shop_container, "Health +1\nScore -500\nMAX: 5",
-                                           object_id = ObjectID(class_id = "shop.@button", object_id = "shop.#plus_button"),
+                                           object_id = ObjectID(object_id = "shop.#plus_button"),
                                            anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
 
-        "====----    Score container    ----===="
-        self.score_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines score container
-
-        temp_rect.size = gui_size
-        temp_rect.topright = (-gui_spacing, gui_spacing)
-        UIPanel(temp_rect, manager = self.ui_manager, container = self.score_container,
-                object_id = ObjectID(object_id = "score.#panel"),
-                anchors = {"right":"right", "top":"top"})
-
-        self.player_score_lbl = UILabel(temp_rect, "Score", self.ui_manager, self.score_container,
-                                        object_id = ObjectID(object_id = "score.#label"),
-                                        anchors = {"right":"right", "top":"top"})
-
         "====----       End label       ----===="
+        self.end_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines end container
+
+        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.end_container,
+                object_id = ObjectID(class_id = "@background_panel", object_id = "end.#background_panel")).change_layer(0)
+
         self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager,
                                  object_id = ObjectID(object_id = "end.#label"), visible = False)
 
@@ -287,7 +298,6 @@ class PingPY(Window):
         self.space.remove(self.player, self.player.shape)
         self.space.remove(self.ball, self.ball.shape)
         pygame.mixer.music.unpause()
-        self.end_label.hide()
         self.goto("MAIN")
 
     def process_collision(self, arbiter: pymunk.arbiter.Arbiter, space: pymunk.Space, data):
@@ -305,10 +315,7 @@ class PingPY(Window):
         pressed_keys = pygame.key.get_just_pressed()
 
         "====----      Holded keys      ----===="
-        if self.state == SHOP_STATE or (holded_keys[pygame.K_TAB] and self.state in [THROWING_STATE, PLAYING_STATE]):
-            self.player_score_lbl.set_text(f"Score: {self.player_score}")
-            self.score_container.show()
-        else: self.score_container.hide()
+        if self.state == SHOP_STATE: self.player_score_lbl.set_text(f"Score: {self.player_score}")
 
         if hasattr(self, "player") and hasattr(self, "ball"):
             if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
@@ -392,7 +399,6 @@ class PingPY(Window):
             # Game over when the player's health == 0
             if not self.player.health:
                 self.end_label.set_text("Game over!")
-                self.end_label.show()
                 timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player.die"])
                 self.goto("END")
@@ -401,13 +407,14 @@ class PingPY(Window):
             if not len(self.grid.shapes):
                 self.player_score += (500 * (self.grid_current_size + 1) + self.player.health * 25)
                 self.end_label.set_text("You win!")
-                self.end_label.show()
                 timer.set_timer(2000, self.end_level)
                 self.master.play(self.sounds["player.win"])
                 self.goto("END")
 
     def process_render(self):
-        self.screen.fill(self.ui_manager.get_theme().get_colour("dark_bg"))
+        self.screen.fill("#000000")
+
+        self.ui_manager.draw_ui(self.screen)
 
         if self.state == SHOP_STATE:
             self.player_speed_lbl.set_text(f"Speed: {Player.speed}")
@@ -422,8 +429,6 @@ class PingPY(Window):
             self.player.draw(self.screen)
             self.ball.draw(self.screen)
             self.grid.draw(self.screen)
-
-        self.ui_manager.draw_ui(self.screen)
 
     def process_render_debug(self):
         "Renders all values for debugging"
