@@ -30,6 +30,13 @@ import timer
 
 
 class PingPY(Window):
+    MAIN_STATE = 0
+    SHOP_STATE = 1
+    PREPARATION_STATE = 2
+    THROWING_STATE = 3
+    PLAYING_STATE = 4
+    END_STATE = 5
+
     def __init__(self):
         "====----    Initialization     ----===="
         # Inits pygame module
@@ -39,6 +46,8 @@ class PingPY(Window):
         self.clock = pygame.time.Clock() # Defines pygame clock object
 
         self.json_config = JsonConfig("properties.json")
+
+        self.STATES = {getattr(self, state) : state for state in dir(self) if state.endswith("_STATE")}
 
         # Inits resource manager
         if not self.json_config.has(key = "chosen_resource"): self.json_config.set(key_value = (("chosen_resource", "default.zip"), ))
@@ -107,9 +116,9 @@ class PingPY(Window):
         self.player_score = PLAYER_DEFAULT_SCORE
 
         # Defines hollow box
-        hollow_box = HollowBox(Rect(-WALL_DEFAULT_WIDTH - 1, -WALL_DEFAULT_WIDTH - 1,
-                                    self.size[0] + WALL_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
-                               WALL_DEFAULT_WIDTH)
+        hollow_box = HollowBox(Rect(-HOLLOW_BOX_DEFAULT_WIDTH - 1, -HOLLOW_BOX_DEFAULT_WIDTH - 1,
+                                    self.size[0] + HOLLOW_BOX_DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
+                               HOLLOW_BOX_DEFAULT_WIDTH)
         self.space.add(hollow_box, *hollow_box.segments)
 
         "====----          GUI          ----===="
@@ -118,12 +127,13 @@ class PingPY(Window):
         gui_spacing = GAME_DEFAULT_GUI_SPACING * self.SIZE_FACTOR
         temp_rect = Rect()
 
+        # Creates containers for all state vars
+        for state in self.STATES.values():
+            setattr(self, f"{state.removesuffix('_STATE').lower()}_container", UIContainer(self.screen.get_rect(), self.ui_manager))
+            UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = getattr(self, f"{state.removesuffix('_STATE').lower()}_container"),
+                object_id = ObjectID(class_id = "game.@background_panel", object_id = f"{state.removesuffix('_STATE').lower()}.#background_panel")).change_layer(0)
+
         "====----    Main container     ----===="
-        self.main_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager) # Defines menu container
-
-        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.main_container,
-                object_id = ObjectID(object_id = "main.#background_panel")).change_layer(0)
-
         # Defines game label
         UILabel(self.screen.get_rect(), self.title, self.ui_manager, self.main_container,
                 object_id = ObjectID(object_id = "main.#label")).change_layer(1)
@@ -158,11 +168,6 @@ class PingPY(Window):
                  anchors = {"right":"right", "bottom":"bottom"})
 
         "====---- Preparation container ----===="
-        self.preparation_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines preparation container
-
-        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.preparation_container,
-                object_id = ObjectID(class_id = "game.@background_panel", object_id = "prep.#background_panel")).change_layer(0)
-
         # Defines preparation back button
         temp_rect.size = (gui_size[1], ) * 2
         temp_rect.bottomleft = (gui_spacing, -gui_spacing)
@@ -189,11 +194,6 @@ class PingPY(Window):
                  anchors = {"right":"right", "bottom":"bottom"})
 
         "====----    Shop container     ----===="
-        self.shop_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines shop container
-
-        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.shop_container,
-                object_id = ObjectID(class_id = "game.@background_panel", object_id = "shop.#background_panel")).change_layer(0)
-
         # Defines shop label
         UILabel(self.screen.get_rect(), "Shop", self.ui_manager, self.shop_container,
                 object_id = ObjectID(object_id = "shop.#label")).change_layer(1)
@@ -256,12 +256,7 @@ class PingPY(Window):
                                            object_id = ObjectID(object_id = "shop.#plus_button"),
                                            anchors = {"left_target":self.player_health_lbl, "bottom":"bottom"})
 
-        "====----       End label       ----===="
-        self.end_container = UIContainer(self.screen.get_rect(), manager = self.ui_manager, visible = False) # Defines end container
-
-        UIPanel(self.screen.get_rect(), manager = self.ui_manager, container = self.end_container,
-                object_id = ObjectID(class_id = "game.@background_panel", object_id = "end.#background_panel")).change_layer(0)
-
+        "====----     End container     ----===="
         self.end_label = UILabel(self.screen.get_rect(), "", self.ui_manager, self.end_container,
                                  object_id = ObjectID(object_id = "end.#label"))
 
@@ -276,7 +271,7 @@ class PingPY(Window):
 
         :param state: The name of the state and container at once
         """
-        self.state = list(STATES.values()).index(f"{state.upper()}_STATE")
+        self.state = list(self.STATES.keys())[list(self.STATES.values()).index(f"{state.upper()}_STATE")]
         for container_name in [attr for attr in dir(self) if attr.endswith("_container")]:
             container: UIContainer = getattr(self, container_name)
             if container_name.startswith(state.lower()): container.show()
@@ -331,23 +326,23 @@ class PingPY(Window):
         pressed_keys = pygame.key.get_just_pressed()
 
         "====----      Holded keys      ----===="
-        if self.state == SHOP_STATE: self.player_score_lbl.set_text(f"Score: {self.player_score}")
+        if self.state == self.SHOP_STATE: self.player_score_lbl.set_text(f"Score: {self.player_score}")
 
         if hasattr(self, "player") and hasattr(self, "ball"):
             if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
-                if self.state == THROWING_STATE and self.ball.arrow_angle < 135:
+                if self.state == self.THROWING_STATE and self.ball.arrow_angle < 135:
                     self.ball.arrow_angle += 100 * self.time_delta
 
-                if self.state == PLAYING_STATE and self.player.rect.left > 0:
+                if self.state == self.PLAYING_STATE and self.player.rect.left > 0:
                     self.player.velocity = (-self.player.speed * self.SIZE_FACTOR, 0)
 
                 else: self.player.velocity = (0, 0)
 
             elif holded_keys[pygame.K_d] or holded_keys[pygame.K_RIGHT]:
-                if self.state == THROWING_STATE and self.ball.arrow_angle > 45:
+                if self.state == self.THROWING_STATE and self.ball.arrow_angle > 45:
                     self.ball.arrow_angle -= 100 * self.time_delta
 
-                if self.state == PLAYING_STATE and self.player.rect.right < self.size[0]:
+                if self.state == self.PLAYING_STATE and self.player.rect.right < self.size[0]:
                     self.player.velocity = (self.player.speed * self.SIZE_FACTOR, 0)
 
                 else: self.player.velocity = (0, 0)
@@ -357,14 +352,14 @@ class PingPY(Window):
         "====----     Pressed keys      ----===="
         if pressed_keys[pygame.K_F3]: self.debug = not self.debug # Toggle debug
 
-        if self.state == THROWING_STATE and pressed_keys[pygame.K_SPACE]: self.goto("PLAYING")
+        if self.state == self.THROWING_STATE and pressed_keys[pygame.K_SPACE]: self.goto("PLAYING")
 
-        if self.state == PLAYING_STATE and pressed_keys[pygame.K_q]:
+        if self.state == self.PLAYING_STATE and pressed_keys[pygame.K_q]:
              self.reset_player(PLAYER_DEFAULT_DAMAGE)
 
         if pressed_keys[pygame.K_ESCAPE]:
-            if self.state in [THROWING_STATE, PLAYING_STATE]: self.end_level()
-            elif self.state in [SHOP_STATE, PREPARATION_STATE]: self.goto("MAIN")
+            if self.state in [self.THROWING_STATE, self.PLAYING_STATE]: self.end_level()
+            elif self.state in [self.SHOP_STATE, self.PREPARATION_STATE]: self.goto("MAIN")
 
 
     def process_events(self):
@@ -407,7 +402,7 @@ class PingPY(Window):
 
     def process_player_events(self):
         "Processes player events. Such as winning, losing, and taking damage."
-        if self.state in [THROWING_STATE, PLAYING_STATE]:
+        if self.state in [self.THROWING_STATE, self.PLAYING_STATE]:
             # Decrease player's health by 1
             if self.ball.position[1] > self.size[1]:
                 self.reset_player(PLAYER_DEFAULT_DAMAGE)
@@ -432,15 +427,15 @@ class PingPY(Window):
 
         self.ui_manager.draw_ui(self.screen)
 
-        if self.state == SHOP_STATE:
+        if self.state == self.SHOP_STATE:
             self.player_speed_lbl.set_text(f"Speed: {Player.speed}")
             self.player_health_lbl.set_text(f"Health: {Player.max_health}")
 
-        elif self.state == PREPARATION_STATE: Grid.draw_preview(self.screen, self.ui_manager.get_theme().get_colour("noraml_text"),
+        elif self.state == self.PREPARATION_STATE: Grid.draw_preview(self.screen, self.ui_manager.get_theme().get_colour("noraml_text"),
                                                                 self.GRID_RECT, (self.GRID_SIZES[self.grid_current_size], ) * 2)
 
-        elif self.state in [THROWING_STATE, PLAYING_STATE]:
-            if self.state == THROWING_STATE:
+        elif self.state in [self.THROWING_STATE, self.PLAYING_STATE]:
+            if self.state == self.THROWING_STATE:
                 self.ball.draw_arrow(self.screen)
             self.player.draw(self.screen)
             self.ball.draw(self.screen)
@@ -450,20 +445,20 @@ class PingPY(Window):
         "Renders all values for debugging"
         self.debug_font = pygame.sysfont.SysFont("NotoSans", 20)
         if self.debug:
-            if self.state in [THROWING_STATE, PLAYING_STATE]: self.space.debug_draw(self.options)
-            debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {STATES[self.state]} ({self.state})"]
+            if self.state in [self.THROWING_STATE, self.PLAYING_STATE]: self.space.debug_draw(self.options)
+            debug_info = [f"{self.fps} ({GAME_FPS_LOCK}) fps", f"state: {self.STATES[self.state]} ({self.state})"]
             self.screen.blit(self.debug_font.render("\n".join(debug_info), True, "#FFFFFF", "#000000"), (0, 0))
 
     def run(self):
         "Runs main cycle"
         self.running = True
-        self.state = MAIN_STATE
+        self.goto("MAIN")
         pygame.mixer.music.play(-1)
         while self.running:
             self.time_delta = self.clock.tick(GAME_FPS_LOCK) / 1000.0
             self.fps = round(self.clock.get_fps())
 
-            if self.state >= THROWING_STATE: pygame.mouse.set_visible(False)
+            if self.state >= self.THROWING_STATE: pygame.mouse.set_visible(False)
             else: pygame.mouse.set_visible(True)
 
             "====---- Update ----===="
@@ -471,7 +466,7 @@ class PingPY(Window):
             self.process_player_events()
             self.process_controls()
             self.ui_manager.update(self.time_delta)
-            if self.state == PLAYING_STATE: self.space.step(self.time_delta)
+            if self.state == self.PLAYING_STATE: self.space.step(self.time_delta)
 
             "====----  Draw  ----===="
             self.process_render()
