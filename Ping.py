@@ -16,8 +16,8 @@ from pygame import Rect
 from pygame import Window
 
 import pygame_gui
-from pygame_gui.core import ObjectID
 from pygame_gui import UIManager
+from pygame_gui.core import ObjectID
 from pygame_gui.core import UIContainer
 from pygame_gui.elements import UIButton, UILabel, UIHorizontalSlider, UIPanel
 
@@ -326,8 +326,6 @@ class PingPY(Window):
         pressed_keys = pygame.key.get_just_pressed()
 
         "====----      Holded keys      ----===="
-        if self.state == self.SHOP_STATE: self.player_score_lbl.set_text(f"Score: {self.player_score}")
-
         if hasattr(self, "player") and hasattr(self, "ball"):
             if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
                 if self.state == self.THROWING_STATE and self.ball.arrow_angle < 135:
@@ -360,7 +358,6 @@ class PingPY(Window):
         if pressed_keys[pygame.K_ESCAPE]:
             if self.state in [self.THROWING_STATE, self.PLAYING_STATE]: self.end_level()
             elif self.state in [self.SHOP_STATE, self.PREPARATION_STATE]: self.goto("MAIN")
-
 
     def process_events(self):
         "Processes all pygame and pygame_gui events"
@@ -428,6 +425,7 @@ class PingPY(Window):
         self.ui_manager.draw_ui(self.screen)
 
         if self.state == self.SHOP_STATE:
+            self.player_score_lbl.set_text(f"Score: {self.player_score}")
             self.player_speed_lbl.set_text(f"Speed: {Player.speed}")
             self.player_health_lbl.set_text(f"Health: {Player.max_health}")
 
