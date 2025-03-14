@@ -50,19 +50,19 @@ class PingPY(Window):
         self.STATES = {getattr(self, state) : state for state in dir(self) if state.endswith("_STATE")}
 
         # Inits resource manager
-        if not self.json_config.has(key = "chosen_resource"): self.json_config.set(key_value = (("chosen_resource", "default.zip"), ))
+        if not self.json_config.has(section = None, key = "chosen_resource"): self.json_config.set(section = None, key_value = (("chosen_resource", "default.zip"), ))
         self.resource_manager = ResourceManager(os.path.join(self.get_execpath(), "resources"))
-        self.resource_manager.load(self.json_config.get(key = "chosen_resource"))
+        self.resource_manager.load(self.json_config.get(section = None, key = "chosen_resource"))
 
         # Defines window measures
         info = pygame.display.Info()
-        if not self.json_config.has("window"): self.json_config.set("window", (("fullscreen", True),
+        if not self.json_config.has(section = "window", key = None): self.json_config.set(section = "window", key_value = (("fullscreen", True),
                                                                                ("resolution", "x".join(map(str, [info.current_w, info.current_h])))))
 
         # Creates window
         super().__init__("PingPY",
-                         size = list(map(int, self.json_config.get("window", "resolution").split("x"))),
-                         fullscreen = self.json_config.get("window", "fullscreen"))
+                         size = list(map(int, self.json_config.get(section = "window", key = "resolution").split("x"))),
+                         fullscreen = self.json_config.get(section = "window", key = "fullscreen"))
 
         self.SIZE_FACTOR = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2) # Defines coefficient between current monitor size and 1920x1080
 
@@ -476,6 +476,5 @@ class PingPY(Window):
         self.resource_manager.close()
 
 
-#Launching the game
-if __name__ == "__main__":
-    PingPY().run()
+#Launches the game
+if __name__ == "__main__": PingPY().run()

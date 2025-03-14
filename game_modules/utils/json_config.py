@@ -14,25 +14,24 @@ class JsonConfig:
             with open(self.file_path, "w") as json_file:
                 json.dump({}, json_file, **self.dump_parameters)
 
-    def set(self, section: typing.Optional[str] = None, key_value: typing.Iterable[tuple] = None):
+    def set(self, section: typing.Optional[str], key_value: typing.Iterable[tuple]):
         with open(self.file_path, "r+") as json_file:
             loaded_json: dict = json.load(json_file)
             json_file.seek(0); json_file.truncate(0)
             merge_dict = dict()
             if section: merge_dict[section] = {}
             for key, value in key_value:
-                if section:
-                    merge_dict[section][key] = value
+                if section: merge_dict[section][key] = value
                 else: merge_dict[key] = value
             json.dump(always_merger.merge(loaded_json, merge_dict), json_file, **self.dump_parameters)
 
-    def has(self, section: typing.Optional[str] = None, key: typing.Optional[str] = None):
+    def has(self, section: typing.Optional[str], key: typing.Optional[str]):
         with open(self.file_path) as json_file:
             loaded_json: dict = json.load(json_file)
-            if section: return section in loaded_json.keys() and (key == None or key in loaded_json[section].keys())
+            if section: return section in loaded_json.keys() and (key or key in loaded_json[section].keys())
             else: return key in loaded_json.keys()
 
-    def get(self, section: typing.Optional[str] = None, key: str = None):
+    def get(self, section: typing.Optional[str], key: str):
         with open(self.file_path) as json_file:
             loaded_json: dict = json.load(json_file)
             return loaded_json[section].get(key) if section else loaded_json.get(key)
