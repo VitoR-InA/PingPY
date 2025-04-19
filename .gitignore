@@ -1,6 +1,11 @@
 .vscode
+
+python
 __pycache__
+
 properties.json
+**/~*
+
 **/dist
 **/build
 **/*.spec

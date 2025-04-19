@@ -1,14 +1,12 @@
-from game_modules.bodies import Ball
-from game_modules.bodies import Grid
-from game_modules.bodies import HollowBox
-from game_modules.bodies import Player
+from core.bodies.ball import Ball, BallController
+from core.bodies.grid import Grid
+from core.bodies import HollowBox
+from core.bodies.player import Player, PlayerController
 
 from game_modules import constants
 
-from game_modules.utils import JsonConfig
-from game_modules.utils import ResourceManager
-
-from math import radians
+from core.utilities import JsonConfig
+from core.utilities import ResourceManager
 
 import os
 import sys
@@ -19,11 +17,11 @@ from pygame import Window
 
 import pygame_gui
 from pygame_gui import UIManager
-from pygame_gui.core import ObjectID
-from pygame_gui.core import UIContainer
-from pygame_gui.elements import UIButton, UILabel, UIHorizontalSlider, UIPanel
+from pygame_gui.core import *
+from pygame_gui.elements import *
 
 import pymunk
+from pymunk import Space
 from pymunk import pygame_util
 
 import random
@@ -47,26 +45,28 @@ class PingPY(Window):
 
         self.clock = pygame.time.Clock() # Defines pygame clock object
 
-        self.json_config = JsonConfig("properties.json")
+        self.json_config = JsonConfig(os.path.abspath("properties.json"))
 
         self.STATES = {getattr(self, state) : state for state in dir(self) if state.endswith("_STATE")}
 
         # Inits resource manager
-        if not self.json_config.has(section = None, key = "chosen_resource"): self.json_config.set(section = None, key_value = (("chosen_resource", "default.zip"), ))
+        if not self.json_config.has("chosen_resource"):
+            self.json_config.set("chosen_resource", "default.zip")
         self.resource_manager = ResourceManager(os.path.join(self.get_execpath(), "resources"))
-        self.resource_manager.load(self.json_config.get(section = None, key = "chosen_resource"))
+        self.resource_manager.load(self.json_config.get("chosen_resource"))
 
         # Defines window params
         info = pygame.display.Info()
-        if not self.json_config.has(section = "window", key = None): self.json_config.set(section = "window", key_value = (("fullscreen", True),
-                                                                                                                           ("resolution", "x".join(map(str, [info.current_w, info.current_h]))),
-                                                                                                                           ("fps_lock", 60)))
+        if not self.json_config.has("window"):
+            self.json_config.set("window.fullscreen", True)
+            self.json_config.set("window.resolution", "x".join(map(str, [info.current_w, info.current_h])),)
+            self.json_config.set("window.fps_lock", 60)
 
         # Creates window
         super().__init__("PingPY",
-                         size = list(map(int, self.json_config.get(section = "window", key = "resolution").split("x"))),
-                         fullscreen = self.json_config.get(section = "window", key = "fullscreen"))
-        self.FPS_LOCK = self.json_config.get("window", "fps_lock")
+                         size = list(map(int, self.json_config.get("window.resolution").split("x"))),
+                         fullscreen = self.json_config.get("window.fullscreen"))
+        self.FPS_LOCK = self.json_config.get("window.fps_lock")
 
         self.SIZE_FACTOR = (self.size[0] / 1920 / 2) + (self.size[1] / 1080 / 2) # Defines coefficient between current monitor size and 1920x1080
 
@@ -96,7 +96,7 @@ class PingPY(Window):
         "====----      Pymunk init      ----===="
         # Pymunk space setup
         pygame_util.positive_y_is_up = False
-        self.space = pymunk.Space()
+        self.space = Space()
 
         # Defines collision handler
         collision_handler = self.space.add_collision_handler(1, 2)
@@ -123,7 +123,7 @@ class PingPY(Window):
         hollow_box = HollowBox(Rect(-constants.HollowBox.DEFAULT_WIDTH - 1, -constants.HollowBox.DEFAULT_WIDTH - 1,
                                     self.size[0] + constants.HollowBox.DEFAULT_WIDTH * 2 + 1, self.size[1] + 50),
                                constants.HollowBox.DEFAULT_WIDTH)
-        self.space.add(hollow_box, *hollow_box.segments)
+        self.space.add(hollow_box.body, *hollow_box.segments)
 
         "====----          GUI          ----===="
         # Defines gui layout
@@ -160,10 +160,10 @@ class PingPY(Window):
                  anchors = {"right":"right", "bottom":"bottom"})
 
         # Defines shop button
-        temp_rect.bottomright = (-gui_spacing, -(gui_spacing * 2 + gui_size[1]))
-        UIButton(temp_rect, "Shop", self.ui_manager, self.main_container, command = lambda: self.goto("SHOP"),
-                 object_id = ObjectID(class_id = "main.@button", object_id = "main.#shop_button"),
-                 anchors = {"right":"right", "bottom":"bottom"})
+        # temp_rect.bottomright = (-gui_spacing, -(gui_spacing * 2 + gui_size[1]))
+        # UIButton(temp_rect, "Shop", self.ui_manager, self.main_container, command = lambda: self.goto("SHOP"),
+        #          object_id = ObjectID(class_id = "main.@button", object_id = "main.#shop_button"),
+        #          anchors = {"right":"right", "bottom":"bottom"})
 
         # Defines exit button
         temp_rect.bottomright = (-gui_spacing, -gui_spacing)
@@ -281,13 +281,14 @@ class PingPY(Window):
             if container_name.startswith(state.lower()): container.show()
             else: container.hide()
 
-    def reset_level(self, damage: int):
+    def reset_level(self, damage_by: int):
         "Returns player and ball to start position, reduces player's health by PLAYER_DEFAULT_DAMAGE"
         self.master.play(self.sounds["player.damage"])
-        self.player.set_position(self.PLAYER_DEFAULT_POS)
-        self.player.sub_health(1)
-        self.ball.set_position(self.BALL_DEFAULT_POS)
-        self.ball.set_angle(radians(-90))
+        self.player.move_to_ip(center = self.PLAYER_DEFAULT_POS)
+        self.player.damage(damage_by)
+        self.ball.move_to_ip(center = self.BALL_DEFAULT_POS)
+        self.ball.body.velocity = 0, 0
+        self.ball_controller.set_angle(90)
         self.goto("THROWING")
 
     def start_level(self):
@@ -295,15 +296,25 @@ class PingPY(Window):
         player_size = list(map(lambda point: point * self.SIZE_FACTOR, constants.Player.DEFAULT_SIZE))
         player_rect = Rect((0, 0), player_size)
         player_rect.center = (self.size[0] / 2, self.size[1] - 50 * self.SIZE_FACTOR)
-        self.player = Player(player_rect)
-        self.space.add(self.player, *self.player.shapes)
+        player_surface = pygame.Surface(player_rect.size)
+        player_surface.fill((255, 255, 255, 255))
+        self.player = Player(player_rect, player_surface, 3, 500)
+        self.player_controller = PlayerController(self.player)
+        self.player.add(self.space)
 
-        self.ball = Ball((255, 0, 0, 255), self.BALL_DEFAULT_POS, constants.Ball.DEFAULT_RADIUS * self.SIZE_FACTOR)
-        self.ball.set_angle(radians(-90))
-        self.space.add(self.ball, *self.ball.shapes)
+        ball_size = (constants.Ball.DEFAULT_RADIUS * 2 * self.SIZE_FACTOR, ) * 2
+        ball_rect = Rect((0, 0), ball_size)
+        ball_rect.center = self.BALL_DEFAULT_POS
+        ball_surface = pygame.Surface(player_rect.size)
+        ball_surface.fill((255, 255, 255, 255))
+        self.ball = Ball(ball_rect, ball_surface)
+        self.ball_controller = BallController(self.ball)
+        self.ball.add(self.space)
 
-        self.grid = Grid(self.GRID_RECT, (self.GRID_SIZES[self.grid_current_size], ) * 2)
-        self.space.add(*self.grid.bodies, *self.grid.shapes)
+        grid_body_surface = pygame.Surface(player_rect.size)
+        grid_body_surface.fill((255, 255, 255, 255))
+        self.grid = Grid(self.GRID_RECT, (self.GRID_SIZES[self.grid_current_size], ) * 2, grid_body_surface)
+        self.grid.add(self.space)
 
         pygame.mixer.music.pause()
         self.master.play(self.sounds["game.start"])
@@ -312,17 +323,15 @@ class PingPY(Window):
     def end_level(self, timer_id = None, time = None):
         "Stops current level"
         if timer_id: timer.kill_timer(timer_id)
-        self.grid.clear()
-        self.space.remove(self.player, *self.player.shapes)
-        self.space.remove(self.ball, *self.ball.shapes)
+        self.grid.kill()
+        self.player.kill()
+        self.ball.kill()
         pygame.mixer.music.unpause()
         self.goto("MAIN")
 
     def process_collision(self, arbiter: pymunk.arbiter.Arbiter, space: pymunk.Space, data):
         "Processes collisions between the ball and the grid cell"
         collided_shape = arbiter.shapes[1]
-        space.remove(collided_shape.body, collided_shape)
-        self.grid.remove(collided_shape.body, collided_shape)
         self.master.play(random.choice(self.sounds["ball.jumps"]))
         self.player_score += 5
         return True
@@ -335,29 +344,25 @@ class PingPY(Window):
         "====----      Holded keys      ----===="
         if hasattr(self, "player") and hasattr(self, "ball"):
             if holded_keys[pygame.K_a] or holded_keys[pygame.K_LEFT]:
-                if self.state == self.THROWING_STATE and self.ball.get_angle() > radians(-135):
-                    self.ball.sub_angle(1 * self.time_delta)
+                if self.state == self.THROWING_STATE:
+                    self.ball_controller.rotate_left(self.time_delta)
 
                 if self.state == self.PLAYING_STATE and self.player.rect.left > 0:
-                    self.player.velocity = (-self.player.current_speed * self.SIZE_FACTOR, 0)
-
-                else: self.player.velocity = (0, 0)
+                    self.player_controller.move_left(self.time_delta)
 
             elif holded_keys[pygame.K_d] or holded_keys[pygame.K_RIGHT]:
-                if self.state == self.THROWING_STATE and self.ball.get_angle() < radians(-45):
-                    self.ball.add_angle(1 * self.time_delta)
+                if self.state == self.THROWING_STATE:
+                    self.ball_controller.rotate_right(self.time_delta)
 
                 if self.state == self.PLAYING_STATE and self.player.rect.right < self.size[0]:
-                    self.player.velocity = (self.player.current_speed * self.SIZE_FACTOR, 0)
-
-                else: self.player.velocity = (0, 0)
-
-            else: self.player.velocity = (0, 0)
+                    self.player_controller.move_right(self.time_delta)
 
         "====----     Pressed keys      ----===="
         if pressed_keys[pygame.K_F3]: self.debug = not self.debug # Toggle debug
 
-        if self.state == self.THROWING_STATE and pressed_keys[pygame.K_SPACE]: self.goto("PLAYING")
+        if self.state == self.THROWING_STATE and pressed_keys[pygame.K_SPACE]:
+            self.ball_controller.launch(1)
+            self.goto("PLAYING")
 
         if self.state == self.PLAYING_STATE and pressed_keys[pygame.K_q]:
              self.reset_level(constants.Player.DEFAULT_DAMAGE)
@@ -400,7 +405,7 @@ class PingPY(Window):
                 self.goto("END")
 
             # Game win when ball breaks all grid bodies
-            if not len(self.grid.shapes):
+            if not len(self.grid.sprites()):
                 self.player_score += (500 * (self.grid_current_size + 1) + self.player.health * 25)
                 self.end_label.set_text("You win!")
                 timer.set_timer(2000, self.end_level)
@@ -408,7 +413,7 @@ class PingPY(Window):
                 self.goto("END")
 
     def process_render(self):
-        self.screen.fill((0, 0, 0, 0))
+        self.screen.fill("#000000")
 
         self.ui_manager.draw_ui(self.screen)
 
@@ -417,14 +422,16 @@ class PingPY(Window):
             self.player_speed_lbl.set_text(f"Speed: {Player.speed}")
             self.player_health_lbl.set_text(f"Health: {Player.max_health}")
 
-        elif self.state == self.PREPARATION_STATE: Grid.draw_preview(self.screen, self.ui_manager.get_theme().get_colour("noraml_text"),
-                                                                self.GRID_RECT, (self.GRID_SIZES[self.grid_current_size], ) * 2)
+        elif self.state == self.PREPARATION_STATE:
+            grid_color = self.ui_manager.get_theme().get_colour("normal_text")
+            Grid.draw_preview(self.screen, grid_color, self.GRID_RECT, (self.GRID_SIZES[self.grid_current_size], ) * 2)
 
         elif self.state in [self.THROWING_STATE, self.PLAYING_STATE]:
             if self.state == self.THROWING_STATE:
-                self.ball.velocity = list(map(lambda point: point * 20, self.ball.draw_direction_arrow(self.screen)))
-            self.player.draw(self.screen)
-            self.ball.draw(self.screen)
+                self.ball_controller.draw_arrow(self.screen)
+            self.screen.blit(self.ball.image, self.ball.rect.topleft)
+            self.screen.blit(self.player.image, self.player.rect.topleft)
+            self.ball.update()
             self.grid.draw(self.screen)
 
     def process_render_debug(self):
@@ -452,7 +459,7 @@ class PingPY(Window):
             self.process_player_events()
             self.process_controls()
             self.ui_manager.update(self.time_delta)
-            if self.state == self.PLAYING_STATE: self.space.step(self.time_delta)
+            self.space.step(self.time_delta)
 
             "====----  Draw  ----===="
             self.process_render()

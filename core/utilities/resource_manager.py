@@ -25,7 +25,7 @@ class ResourceManager:
             zip.extractall(self.loaded_resource) # Extracts all loaded_resource file data
 
             if os.name == "nt":
-                win32api.SetFileAttributes(self.loaded_resource, win32con.FILE_ATTRIBUTE_HIDDEN)
+                win32api.SetFileAttributes(self.loaded_resource, win32api.GetFileAttributes(self.loaded_resource) & win32con.FILE_ATTRIBUTE_HIDDEN)
 
     def has(self, file_path: os.PathLike) -> bool:
         if os.path.exists(os.path.join(self.loaded_resource, file_path)):

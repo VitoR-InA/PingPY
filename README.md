@@ -7,7 +7,7 @@
 ## Description
 **PingPY** - A game written in python using the pygame library for creating 2D games, pygame integration that adds a user interface - pygame-gui and the pymunk library for simulating physics.
 
-## Build it yourself
+## Installation
 ```sh
 git clone https://github.com/VitoR-InA/PingPY
 cd PingPY
