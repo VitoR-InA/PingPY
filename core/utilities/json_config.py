@@ -7,6 +7,14 @@ import typing
 
 
 class JsonConfig:
+    dump_parameters = {"indent": 4, "sort_keys": True}
+    def __init__(self, config_path: os.PathLike):
+        self.file_path = config_path
+        if not os.path.exists(self.file_path):
+            os.makedirs(os.path.dirname(self.file_path), exist_ok = True)
+            with open(self.file_path, "w") as json_file:
+                json.dump({}, json_file, **self.dump_parameters)
+
     @classmethod
     def merge(self, a: dict, b: dict):
         merged_dict = {}
@@ -40,14 +48,6 @@ class JsonConfig:
             if len(splitted_path) == 1: return next_value
             return self.get_in_dict(next_value, ".".join(splitted_path[1:]))
         return None
-
-    dump_parameters = {"indent": 4, "sort_keys": True}
-    def __init__(self, config_path: os.PathLike):
-        self.file_path = config_path
-        if not os.path.exists(self.file_path):
-            os.makedirs(os.path.dirname(self.file_path), exist_ok = True)
-            with open(self.file_path, "w") as json_file:
-                json.dump({}, json_file, **self.dump_parameters)
 
     @dispatch(str, object)
     def set(self, full_path: typing.Optional[str], value):

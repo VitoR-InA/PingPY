@@ -7,6 +7,7 @@ if os.name == "nt":
     import win32api
     import win32con
 
+
 class ResourceManager:
     "Simple tool to work with PingPY resources"
     def __init__(self, resources_path: os.PathLike):

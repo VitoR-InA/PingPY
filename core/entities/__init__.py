@@ -1,0 +1,1 @@
+from core.entities.entity import Entity
