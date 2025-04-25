@@ -5,7 +5,6 @@ from core.entities.player import Player, PlayerController
 
 from game_modules import constants
 
-from core.utilities import DrawManager
 from core.utilities import JsonConfig
 from core.utilities import ResourceManager
 
